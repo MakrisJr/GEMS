@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+data/raw/*
+data/intermediate/*
+data/models/*
+!data/raw/.gitkeep
+!data/intermediate/.gitkeep
+!data/models/.gitkeep
+ncbi_dataset/
