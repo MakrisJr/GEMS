@@ -26,6 +26,17 @@ def _load_existing_or_rebuild_model(model_dir: Path):
 
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
     model_id = summary["model_id"]
+    input_path = Path(summary["input_path"])
+    if not input_path.is_absolute():
+        input_path = PROJECT_ROOT / input_path
+    use_rast = bool(summary.get("use_rast", False))
+
+    from src.reconstruction import build_draft_model_from_protein_fasta
+
+    try:
+        return build_draft_model_from_protein_fasta(str(input_path), model_id, use_rast=use_rast)
+    except Exception:
+        pass
 
     sbml_path = model_dir / "model.xml"
     if sbml_path.exists():
@@ -45,12 +56,6 @@ def _load_existing_or_rebuild_model(model_dir: Path):
         except Exception:
             pass
 
-    from src.reconstruction import build_draft_model_from_protein_fasta
-
-    input_path = Path(summary["input_path"])
-    if not input_path.is_absolute():
-        input_path = PROJECT_ROOT / input_path
-    use_rast = bool(summary.get("use_rast", False))
     return build_draft_model_from_protein_fasta(str(input_path), model_id, use_rast=use_rast)
 
 

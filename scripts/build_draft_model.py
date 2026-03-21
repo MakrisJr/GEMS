@@ -53,6 +53,7 @@ def main() -> int:
     model = build_draft_model_from_protein_fasta(str(input_path), args.model_id, use_rast=args.use_rast)
     summary = summarize_model(model)
     summary["input_path"] = str(input_path)
+    summary["use_rast"] = args.use_rast
 
     logger.info("Saving summary files to %s", output_dir)
     save_model_summary(summary, str(output_dir / "model_summary.json"))

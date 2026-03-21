@@ -1,34 +1,44 @@
 baseline:
   description: "baseline medium"
   bounds:
-    EX_cpd00011_e0: 10.0
+    EX_cpd00209_e0: 10.0
+    EX_cpd00011_e0: 1000.0
     EX_cpd00007_e0: 1000.0
     EX_cpd00001_e0: 1000.0
+    EX_cpd00067_e0: 1000.0
 
-low_co2:
-  description: "reduced CO2 uptake bound"
+low_nitrate:
+  description: "reduced nitrate uptake"
   bounds:
-    EX_cpd00011_e0: 2.0
+    EX_cpd00209_e0: 2.0
+    EX_cpd00011_e0: 1000.0
     EX_cpd00007_e0: 1000.0
     EX_cpd00001_e0: 1000.0
+    EX_cpd00067_e0: 1000.0
 
 low_oxygen:
   description: "reduced oxygen uptake bound"
   bounds:
-    EX_cpd00011_e0: 10.0
+    EX_cpd00209_e0: 10.0
+    EX_cpd00011_e0: 1000.0
     EX_cpd00007_e0: 2.0
     EX_cpd00001_e0: 1000.0
+    EX_cpd00067_e0: 1000.0
 
-high_co2:
-  description: "increased CO2 uptake bound"
+high_nitrate:
+  description: "increased nitrate uptake"
   bounds:
-    EX_cpd00011_e0: 20.0
+    EX_cpd00209_e0: 20.0
+    EX_cpd00011_e0: 1000.0
     EX_cpd00007_e0: 1000.0
     EX_cpd00001_e0: 1000.0
+    EX_cpd00067_e0: 1000.0
 
-low_water:
-  description: "reduced water uptake bound"
+low_proton:
+  description: "reduced proton uptake"
   bounds:
-    EX_cpd00011_e0: 10.0
+    EX_cpd00209_e0: 10.0
+    EX_cpd00011_e0: 1000.0
     EX_cpd00007_e0: 1000.0
-    EX_cpd00001_e0: 2.0
+    EX_cpd00001_e0: 1000.0
+    EX_cpd00067_e0: 2.0
