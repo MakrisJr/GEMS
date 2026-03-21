@@ -1,2 +1,6 @@
 modelseedpy
 pyyaml
+fastapi
+uvicorn
+streamlit
+requests
