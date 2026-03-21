@@ -7,10 +7,10 @@ import json
 import re
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import pandas as pd
 
 from .logging_utils import get_logger
+from .plot_utils import PALETTE, save_ranked_barh_plot
 
 
 logger = get_logger(__name__)
@@ -22,14 +22,14 @@ def _safe_name(value: str) -> str:
 
 def _save_single_bar_plot(label: str, value, title: str, ylabel: str, outpath: Path, color: str):
     """Save a simple one-condition bar plot."""
-    figure, axis = plt.subplots(figsize=(6, 4))
-    axis.bar([label], [0.0 if value is None else value], color=color)
-    axis.set_title(title)
-    axis.set_ylabel(ylabel)
-    axis.set_xlabel("Condition")
-    figure.tight_layout()
-    figure.savefig(outpath, dpi=150)
-    plt.close(figure)
+    save_ranked_barh_plot(
+        [label],
+        [value],
+        outpath=outpath,
+        title=title,
+        xlabel=ylabel,
+        colors=[color],
+    )
     logger.info("Saved plot to %s", outpath)
 
 
@@ -53,33 +53,33 @@ def save_mode_comparison_plot(outdir: str):
     if theoretical is not None:
         labels.append("Theoretical")
         values.append(0.0 if theoretical.get("bio2_rate") is None else theoretical.get("bio2_rate"))
-        colors.append("#4C78A8")
+        colors.append(PALETTE["theoretical"])
 
     preset_results = _load_json_if_exists(output_dir / "preset_conditions.json") or []
     for row in preset_results:
         labels.append(f"Preset: {row.get('condition', '')}")
         values.append(0.0 if row.get("bio2_rate") is None else row.get("bio2_rate"))
-        colors.append("#59A14F")
+        colors.append(PALETTE["preset"])
 
     custom_paths = sorted(output_dir.glob("custom_condition_*.json"))
     for path in custom_paths:
         row = _load_json_if_exists(path) or {}
         labels.append(f"Custom: {row.get('condition', '')}")
         values.append(0.0 if row.get("bio2_rate") is None else row.get("bio2_rate"))
-        colors.append("#E15759")
+        colors.append(PALETTE["custom"])
 
     if not labels:
         return
 
-    figure, axis = plt.subplots(figsize=(max(8, len(labels) * 1.2), 4.8))
-    axis.bar(labels, values, color=colors)
-    axis.set_title("MVP condition comparison on a draft model")
-    axis.set_ylabel("Predicted bio2 rate")
-    axis.set_xlabel("Analysis output")
-    axis.tick_params(axis="x", rotation=25)
-    figure.tight_layout()
-    figure.savefig(output_dir / "mvp_mode_comparison.png", dpi=150)
-    plt.close(figure)
+    save_ranked_barh_plot(
+        labels,
+        values,
+        outpath=output_dir / "mvp_mode_comparison.png",
+        title="MVP condition comparison on a draft model",
+        xlabel="Predicted bio2 rate",
+        colors=colors,
+        subtitle="Theoretical, preset, and saved custom analyses on the same draft model.",
+    )
     logger.info("Saved mode comparison plot to %s", output_dir / "mvp_mode_comparison.png")
 
 
@@ -91,6 +91,8 @@ def save_theoretical_upper_bound(result: dict, outdir: str):
     json_path = output_dir / "theoretical_upper_bound.json"
     txt_path = output_dir / "theoretical_upper_bound.txt"
     png_path = output_dir / "theoretical_upper_bound.png"
+    csv_path = output_dir / "theoretical_upper_bound_conditions.csv"
+    conditions_txt_path = output_dir / "theoretical_upper_bound_conditions.txt"
 
     json_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
     lines = [
@@ -104,13 +106,41 @@ def save_theoretical_upper_bound(result: dict, outdir: str):
         f"n_added_boundaries: {result.get('n_added_boundaries', 0)}",
     ]
     txt_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    boundary_rows = list(result.get("boundary_fluxes", []))
+    if boundary_rows:
+        pd.DataFrame(boundary_rows).to_csv(csv_path, index=False)
+    else:
+        pd.DataFrame(
+            [{"metabolite_id": metabolite_id} for metabolite_id in result.get("metabolite_ids", [])]
+        ).to_csv(csv_path, index=False)
+
+    condition_lines = [
+        "Theoretical upper-bound condition values",
+        "This is a best-case benchmark, not a wet-lab medium recommendation.",
+        f"condition: {result.get('condition', '')}",
+        f"biomass_reaction_id: {result.get('biomass_reaction_id', '')}",
+        f"bio2_rate: {result.get('bio2_rate', '')}",
+        f"bio2_yield_on_total_added_flux: {result.get('bio2_yield_on_total_added_flux', '')}",
+        f"total_added_boundary_flux: {result.get('total_added_boundary_flux', '')}",
+        f"status: {result.get('status', '')}",
+        "",
+        "Boundary values used by the optimized solution:",
+    ]
+    for row in boundary_rows:
+        condition_lines.append(
+            f"{row.get('metabolite_id', '')} | {row.get('metabolite_name', '')} | "
+            f"{row.get('boundary_id', '')} | flux={row.get('flux', '')} | abs_flux={row.get('abs_flux', '')}"
+        )
+    conditions_txt_path.write_text("\n".join(condition_lines) + "\n", encoding="utf-8")
+
     _save_single_bar_plot(
         label="Theoretical Upper Bound",
         value=result.get("bio2_rate"),
         title="Theoretical upper bound on a draft model",
         ylabel="Predicted bio2 rate",
         outpath=png_path,
-        color="#4C78A8",
+        color=PALETTE["theoretical"],
     )
     save_mode_comparison_plot(str(output_dir))
     logger.info("Saved theoretical upper bound outputs to %s", output_dir)
@@ -160,15 +190,16 @@ def save_preset_benchmark(results, outdir: str):
 
     conditions = [row["condition"] for row in table_rows]
     rates = [0.0 if row["bio2_rate"] is None else row["bio2_rate"] for row in table_rows]
-    plt.figure(figsize=(9, 4.5))
-    plt.bar(conditions, rates)
-    plt.ylabel("Predicted bio2 rate")
-    plt.xlabel("Preset Condition")
-    plt.title("Preset benchmark conditions on a draft model")
-    plt.xticks(rotation=20, ha="right")
-    plt.tight_layout()
-    plt.savefig(output_dir / "preset_conditions.png", dpi=150)
-    plt.close()
+    colors = [PALETTE["preset"]] + [PALETTE["preset_alt"]] * max(0, len(conditions) - 1)
+    save_ranked_barh_plot(
+        conditions,
+        rates,
+        outpath=output_dir / "preset_conditions.png",
+        title="Preset benchmark conditions on a draft model",
+        xlabel="Predicted bio2 rate",
+        colors=colors,
+        subtitle="Higher bars indicate better biomass-like performance under the preset condition set.",
+    )
     save_mode_comparison_plot(str(output_dir))
     logger.info("Saved preset benchmark outputs to %s", output_dir)
 
@@ -202,7 +233,7 @@ def save_custom_condition(result: dict, outdir: str):
         title="Custom condition on a draft model",
         ylabel="Predicted bio2 rate",
         outpath=png_path,
-        color="#E15759",
+        color=PALETTE["custom"],
     )
     save_mode_comparison_plot(str(output_dir))
     logger.info("Saved custom condition outputs to %s", output_dir)

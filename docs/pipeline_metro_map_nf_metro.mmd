@@ -1,0 +1,102 @@
+graph LR
+
+%%metro title: Fungal GEM MVP Pipeline
+%%metro legend: bottom
+%%metro style: light
+%%metro line: core | Core Build | #2c9f73
+%%metro line: theo | Theoretical Upper Bound | #3b82f6
+%%metro line: preset | Preset Conditions | #f59e0b
+%%metro line: custom | Custom Condition | #e15759
+
+%%metro grid: input | 0,1
+%%metro grid: modelseed | 1,1
+%%metro grid: draft | 2,1
+%%metro grid: export | 3,1
+%%metro grid: hub | 4,1
+%%metro grid: theoretical | 6,0
+%%metro grid: presetlib | 6,1
+%%metro grid: custommode | 6,2
+%%metro grid: summary | 7,1
+
+subgraph input [Input]
+  %%metro direction: LR
+  upload[Protein FASTA]
+  prepare[Check input]
+  upload -->|core| prepare
+end
+
+subgraph modelseed [ModelSEED]
+  %%metro direction: LR
+  genome[Load MSGenome]
+  rast[Optional RAST]
+  genome -->|core| rast
+end
+
+subgraph draft [Draft GEM]
+  %%metro direction: LR
+  reconstruct[Reconstruct model]
+  draftgem[Draft GEM]
+  reconstruct -->|core| draftgem
+end
+
+subgraph export [Export + COBRA]
+  %%metro direction: LR
+  gapfill[Gapfill]
+  exportmodel[Export]
+  inspect[COBRA]
+  gapfill -->|core| exportmodel
+  exportmodel -->|core| inspect
+end
+
+subgraph hub [Analysis Hub]
+  %%metro direction: LR
+  %%metro entry: left | core
+  %%metro exit: right | theo,preset,custom
+  analysis[Pick analysis mode]
+end
+
+subgraph theoretical [Mode 1]
+  %%metro direction: LR
+  %%metro entry: left | theo
+  %%metro exit: right | theo
+  upper[Theoretical bound]
+  tplot[Bound plot]
+  upper -->|theo| tplot
+end
+
+subgraph presetlib [Mode 2]
+  %%metro direction: LR
+  %%metro entry: left | preset
+  %%metro exit: right | preset
+  presets[Preset benchmark]
+  pranked[Preset plot]
+  presets -->|preset| pranked
+end
+
+subgraph custommode [Mode 3]
+  %%metro direction: LR
+  %%metro entry: left | custom
+  %%metro exit: right | custom
+  customseed[Custom input]
+  cplot[Custom plot]
+  customseed -->|custom| cplot
+end
+
+subgraph summary [Comparison]
+  %%metro direction: LR
+  %%metro entry: left | theo,preset,custom
+  compare[Comparison plot]
+end
+
+prepare -->|core| genome
+rast -->|core| reconstruct
+draftgem -->|core| gapfill
+inspect -->|core| analysis
+
+analysis -->|theo| upper
+analysis -->|preset| presets
+analysis -->|custom| customseed
+
+tplot -->|theo| compare
+pranked -->|preset| compare
+cplot -->|custom| compare

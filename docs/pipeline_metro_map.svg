@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="980" viewBox="0 0 1600 980" role="img" aria-labelledby="title desc">
+  <title id="title">Fungal GEM MVP pipeline metro map</title>
+  <desc id="desc">Metro-map-style diagram of the fungal ModelSEED and COBRA MVP pipeline, from protein FASTA input through reconstruction, export, inspection, and three analysis modes.</desc>
+
+  <defs>
+    <style>
+      .title { font: 700 34px "Segoe UI", Arial, sans-serif; fill: #152238; }
+      .subtitle { font: 500 17px "Segoe UI", Arial, sans-serif; fill: #54657d; }
+      .label { font: 700 18px "Segoe UI", Arial, sans-serif; fill: #152238; }
+      .small { font: 500 13px "Segoe UI", Arial, sans-serif; fill: #5f6f86; }
+      .legend { font: 600 14px "Segoe UI", Arial, sans-serif; fill: #31445f; }
+      .panel { fill: #fbfcfe; stroke: #dbe3ee; stroke-width: 2; rx: 20; }
+      .main-line { fill: none; stroke: #2c9f73; stroke-width: 12; stroke-linecap: round; stroke-linejoin: round; }
+      .blue-line { fill: none; stroke: #3b82f6; stroke-width: 10; stroke-linecap: round; stroke-linejoin: round; }
+      .orange-line { fill: none; stroke: #f59e0b; stroke-width: 10; stroke-linecap: round; stroke-linejoin: round; }
+      .red-line { fill: none; stroke: #e15759; stroke-width: 10; stroke-linecap: round; stroke-linejoin: round; }
+      .gray-line { fill: none; stroke: #8b95a7; stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 10 10; }
+      .station-main { fill: #ffffff; stroke: #2c9f73; stroke-width: 7; }
+      .station-blue { fill: #ffffff; stroke: #3b82f6; stroke-width: 6; }
+      .station-orange { fill: #ffffff; stroke: #f59e0b; stroke-width: 6; }
+      .station-red { fill: #ffffff; stroke: #e15759; stroke-width: 6; }
+      .station-gray { fill: #ffffff; stroke: #8b95a7; stroke-width: 5; }
+      .hub { fill: #152238; stroke: #ffffff; stroke-width: 6; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="980" fill="#f4f7fb" />
+
+  <text x="80" y="85" class="title">Fungal GEM MVP Pipeline</text>
+  <text x="80" y="118" class="subtitle">Metro-style view of the current hackathon build: model construction, export, inspection, and analysis modes.</text>
+
+  <rect x="70" y="150" width="1460" height="735" class="panel" />
+
+  <path class="main-line" d="M 140 330 L 360 330 L 550 330 L 770 330 L 980 330 L 1180 330" />
+  <path class="blue-line" d="M 980 330 L 980 185 L 1260 185" />
+  <path class="orange-line" d="M 980 330 L 1160 500 L 1400 500" />
+  <path class="red-line" d="M 980 330 L 980 700 L 1270 700" />
+  <path class="gray-line" d="M 770 330 L 770 560 L 580 560 L 430 700" />
+
+  <circle cx="140" cy="330" r="18" class="station-main" />
+  <circle cx="360" cy="330" r="18" class="station-main" />
+  <circle cx="550" cy="330" r="18" class="station-main" />
+  <circle cx="770" cy="330" r="18" class="station-main" />
+  <circle cx="980" cy="330" r="20" class="hub" />
+  <circle cx="1180" cy="330" r="18" class="station-main" />
+
+  <circle cx="980" cy="185" r="16" class="station-blue" />
+  <circle cx="1260" cy="185" r="16" class="station-blue" />
+
+  <circle cx="1160" cy="500" r="16" class="station-orange" />
+  <circle cx="1400" cy="500" r="16" class="station-orange" />
+
+  <circle cx="980" cy="700" r="16" class="station-red" />
+  <circle cx="1270" cy="700" r="16" class="station-red" />
+
+  <circle cx="770" cy="560" r="14" class="station-gray" />
+  <circle cx="580" cy="560" r="14" class="station-gray" />
+  <circle cx="430" cy="700" r="14" class="station-gray" />
+
+  <text x="108" y="378" class="label">Protein FASTA</text>
+  <text x="78" y="401" class="small">User uploads `.faa` input</text>
+  <text x="82" y="421" class="small">Primary supported entry point</text>
+
+  <text x="285" y="378" class="label">ModelSEED Load</text>
+  <text x="248" y="401" class="small">Load proteins into `MSGenome`</text>
+  <text x="270" y="421" class="small">Optional RAST annotation</text>
+
+  <text x="462" y="378" class="label">Draft GEM</text>
+  <text x="430" y="401" class="small">Template-based reconstruction</text>
+  <text x="446" y="421" class="small">First draft metabolic model</text>
+
+  <text x="661" y="378" class="label">Export Model</text>
+  <text x="627" y="401" class="small">Best-effort gapfill</text>
+  <text x="622" y="421" class="small">SBML / JSON for COBRApy</text>
+
+  <text x="914" y="378" class="label">Analysis Hub</text>
+  <text x="870" y="401" class="small">COBRA inspection + baseline optimization</text>
+  <text x="909" y="421" class="small">Select one analysis mode</text>
+
+  <text x="1094" y="378" class="label">Outputs</text>
+  <text x="1040" y="401" class="small">CSV, JSON, TXT, and plots</text>
+  <text x="1043" y="421" class="small">Rankings for later UI use</text>
+
+  <text x="1012" y="153" class="label">Theoretical Upper Bound</text>
+  <text x="1011" y="174" class="small">Best-case benchmark</text>
+  <text x="1011" y="194" class="small">Not a wet-lab recipe</text>
+
+  <text x="1288" y="190" class="label">Theoretical Plot</text>
+  <text x="1288" y="212" class="small">`theoretical_upper_bound.png`</text>
+  <text x="1288" y="232" class="small">Peak bio2 rate benchmark</text>
+
+  <text x="1188" y="472" class="label">Preset Conditions</text>
+  <text x="1188" y="494" class="small">Pre-made benchmark library</text>
+  <text x="1188" y="514" class="small">Comparable ranked conditions</text>
+
+  <text x="1418" y="504" class="label">Preset Plot + Ranking</text>
+  <text x="1418" y="526" class="small">`preset_conditions.csv/.png`</text>
+  <text x="1418" y="546" class="small">Best condition list</text>
+
+  <text x="1012" y="673" class="label">Custom Condition</text>
+  <text x="1012" y="695" class="small">Start from preset or manual IDs</text>
+  <text x="1012" y="715" class="small">User-defined what-if scenario</text>
+
+  <text x="1288" y="704" class="label">Custom Plot</text>
+  <text x="1288" y="726" class="small">`custom_condition_*.png`</text>
+  <text x="1288" y="746" class="small">Saved custom result</text>
+
+  <text x="796" y="553" class="label">Exchange Diagnosis</text>
+  <text x="796" y="575" class="small">Why is normal growth zero?</text>
+
+  <text x="387" y="553" class="label">Debug Growth</text>
+  <text x="387" y="575" class="small">Objective, medium, biomass checks</text>
+
+  <text x="270" y="727" class="label">Oracle Rescue</text>
+  <text x="270" y="749" class="small">Growth-capable under idealized inputs</text>
+  <text x="270" y="769" class="small">Explains model bottlenecks</text>
+
+  <rect x="1080" y="795" width="390" height="70" fill="#ffffff" stroke="#dbe3ee" stroke-width="2" rx="16" />
+  <circle cx="1110" cy="818" r="8" fill="#2c9f73" />
+  <text x="1128" y="823" class="legend">Core build line</text>
+  <circle cx="1110" cy="845" r="8" fill="#3b82f6" />
+  <text x="1128" y="850" class="legend">Theoretical upper bound mode</text>
+  <circle cx="1290" cy="818" r="8" fill="#f59e0b" />
+  <text x="1308" y="823" class="legend">Preset condition mode</text>
+  <circle cx="1290" cy="845" r="8" fill="#e15759" />
+  <text x="1308" y="850" class="legend">Custom condition mode</text>
+
+  <rect x="95" y="795" width="860" height="70" fill="#ffffff" stroke="#dbe3ee" stroke-width="2" rx="16" />
+  <text x="118" y="823" class="legend">Recommended demo path:</text>
+  <text x="307" y="823" class="small">Upload protein FASTA -> build/export draft model -> inspect -> run theoretical mode -> run preset mode -> inspect one custom condition</text>
+  <text x="118" y="850" class="small">Current honest framing: draft model benchmarking, not final experimental media recommendation.</text>
+</svg>

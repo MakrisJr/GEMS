@@ -25,6 +25,8 @@ python scripts/run_mvp_pipeline.py --input ncbi_dataset/data/GCA_000182925.2/pro
 python scripts/analyze_mvp.py --model-dir data/models/test_model_rast --mode theoretical
 python scripts/analyze_mvp.py --model-dir data/models/test_model_rast --mode preset
 python scripts/analyze_mvp.py --model-dir data/models/test_model_rast --mode custom --from-preset rich_debug_medium --condition-name my_custom_condition
+python scripts/validate_mvp.py --model-dir data/models/test_model_rast
+python scripts/validate_mvp.py --model-dir data/models/test_model_rast --mode theoretical_upper_bound --biomass-reaction bio2
 
 Modes:
 - theoretical = best-case theoretical upper bound
@@ -175,6 +177,8 @@ python scripts/run_mvp_pipeline.py --input ncbi_dataset/data/GCA_000182925.2/pro
 python scripts/analyze_mvp.py --model-dir data/models/test_model_rast --mode theoretical
 python scripts/analyze_mvp.py --model-dir data/models/test_model_rast --mode preset
 python scripts/analyze_mvp.py --model-dir data/models/test_model_rast --mode custom --from-preset rich_debug_medium --condition-name my_custom_condition
+python scripts/validate_mvp.py --model-dir data/models/test_model_rast
+python scripts/validate_mvp.py --model-dir data/models/test_model_rast --mode theoretical_upper_bound --biomass-reaction bio2
 
 
 All commands in one block
@@ -269,6 +273,8 @@ Hackathon MVP outputs:
 - data/models/MODEL_ID/mvp_summary.txt
 - data/models/MODEL_ID/theoretical_upper_bound.json
 - data/models/MODEL_ID/theoretical_upper_bound.txt
+- data/models/MODEL_ID/theoretical_upper_bound_conditions.csv
+- data/models/MODEL_ID/theoretical_upper_bound_conditions.txt
 - data/models/MODEL_ID/theoretical_upper_bound.png
 - data/models/MODEL_ID/preset_conditions.csv
 - data/models/MODEL_ID/preset_conditions.json
@@ -278,3 +284,17 @@ Hackathon MVP outputs:
 - data/models/MODEL_ID/custom_condition_<name>.txt
 - data/models/MODEL_ID/custom_condition_<name>.png
 - data/models/MODEL_ID/mvp_mode_comparison.png
+
+Optional validation outputs:
+- data/models/MODEL_ID/validation_summary.json
+- data/models/MODEL_ID/validation_summary.txt
+- data/models/MODEL_ID/dead_end_metabolites.csv
+- data/models/MODEL_ID/exchange_fva.csv
+- data/models/MODEL_ID/gene_essentiality.csv
+- data/models/MODEL_ID/validation_dashboard.png
+- data/models/MODEL_ID/theoretical_upper_bound_validation_summary.json
+- data/models/MODEL_ID/theoretical_upper_bound_validation_summary.txt
+- data/models/MODEL_ID/theoretical_upper_bound_dead_end_metabolites.csv
+- data/models/MODEL_ID/theoretical_upper_bound_exchange_fva.csv
+- data/models/MODEL_ID/theoretical_upper_bound_gene_essentiality.csv
+- data/models/MODEL_ID/theoretical_upper_bound_validation_dashboard.png

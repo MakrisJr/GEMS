@@ -6,10 +6,10 @@ This is a first-pass media screen on a draft model.
 import json
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import pandas as pd
 
 from .logging_utils import get_logger
+from .plot_utils import PALETTE, save_ranked_barh_plot
 
 
 logger = get_logger(__name__)
@@ -47,13 +47,14 @@ def save_media_plot(results, outdir: str):
 
     conditions = [row["condition"] for row in results]
     values = [0.0 if row["predicted_growth"] is None else row["predicted_growth"] for row in results]
-
-    plt.figure(figsize=(8, 4))
-    plt.bar(conditions, values)
-    plt.ylabel("Predicted Growth")
-    plt.xlabel("Condition")
-    plt.title("First-pass media screen on a draft model")
-    plt.tight_layout()
-    plt.savefig(output_dir / "media_screen.png", dpi=150)
-    plt.close()
+    colors = [PALETTE["media"]] + [PALETTE["preset_alt"]] * max(0, len(conditions) - 1)
+    save_ranked_barh_plot(
+        conditions,
+        values,
+        outpath=output_dir / "media_screen.png",
+        title="First-pass media screen on a draft model",
+        xlabel="Predicted growth",
+        colors=colors,
+        subtitle="This is an early screen on a draft model, so flat or zero results are still informative.",
+    )
     logger.info("Saved media screening plot to %s", output_dir / "media_screen.png")
