@@ -1,11 +1,81 @@
-conda create -n bio python=3.11
-conda activate bio
-pip install carveme
-conda install -c bioconda diamond
-conda install -c conda-forge glpk
-pip install cobra
+fungal_modelseed_pipeline
+=========================
 
-# check with carve with 
-carve GCF_000005845.2_ASM584v2_protein.faa -o model.xml
+This file lists the packages needed for the current minimal pipeline and the
+commands to run it.
 
-python - <<'PY'\nimport cobra\n\nmodel = cobra.io.read_sbml_model("model.xml")   # replace with your filename\nprint("Model loaded successfully")\nprint("Reactions:", len(model.reactions))\nprint("Metabolites:", len(model.metabolites))\nprint("Genes:", len(model.genes))\n\nsolution = model.optimize()\nprint("Objective value:", solution.objective_value)\nprint("Status:", solution.status)\nPY
+This project currently uses:
+- modelseedpy
+- pyyaml
+- cobra
+- pandas
+- matplotlib
+
+Suggested environment setup
+---------------------------
+
+If you want a fresh conda environment:
+
+conda create -n fungal-modelseed python=3.10 -y
+conda activate fungal-modelseed
+pip install modelseedpy pyyaml cobra pandas matplotlib
+
+Run commands
+------------
+
+From the project root:
+
+cd /home/constantinos/projects/Biohacathon/fungal_modelseed_pipeline
+
+1. Detect the input type
+
+python scripts/prepare_input.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa
+
+2. Load the protein FASTA into a ModelSEEDpy genome object
+
+python scripts/first_modelseed_step.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa
+
+3. Build a draft model without RAST
+
+python scripts/build_draft_model.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa --model-id test_model
+
+4. Build a draft model with RAST
+
+python scripts/build_draft_model.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa --model-id test_model_rast --use-rast
+
+5. Gapfill and export the draft model
+
+python scripts/gapfill_and_export_model.py --model-dir data/models/test_model_rast
+
+6. Inspect the exported model in COBRApy
+
+python scripts/inspect_with_cobra.py --model-dir data/models/test_model_rast
+
+7. Run the first-pass media screen
+
+python scripts/screen_media.py --model-dir data/models/test_model_rast --media config/media_library.yml
+
+8. Diagnose the exchange space
+
+python scripts/diagnose_exchange_space.py --model-dir data/models/test_model_rast
+
+Important output files
+----------------------
+
+Draft model outputs:
+- data/models/test_model_rast/model_summary.json
+- data/models/test_model_rast/model.xml
+
+COBRA inspection outputs:
+- data/models/test_model_rast/model_overview.json
+- data/models/test_model_rast/exchanges.csv
+- data/models/test_model_rast/baseline_optimization.json
+
+Media screen outputs:
+- data/models/test_model_rast/media_screen.csv
+- data/models/test_model_rast/media_screen.json
+- data/models/test_model_rast/media_screen.png
+
+Exchange diagnosis outputs:
+- data/models/test_model_rast/exchange_metabolites.csv
+- data/models/test_model_rast/exchange_diagnosis.json
