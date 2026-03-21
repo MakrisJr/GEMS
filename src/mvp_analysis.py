@@ -1,0 +1,137 @@
+"""User-facing analysis modes for the hackathon MVP.
+
+This is a draft model analysis layer before real media optimisation.
+Theoretical and preset conditions are best used as benchmarking tools.
+"""
+
+from .bio2_benchmark import benchmark_bio2_conditions
+from .oracle_medium import build_debug_medium_library
+
+
+PRESET_LABELS = {
+    "all_reactants": "full_precursor_set",
+    "central_carbon_precursors": "rich_debug_medium",
+    "lower_tca_precursors": "lower_tca_rescue",
+    "upper_sugar_precursors": "upper_sugar_only",
+    "energy_redox_only": "energy_redox_only",
+}
+
+PRESET_DESCRIPTIONS = {
+    "all_reactants": "all biomass reactants available as a rich debug benchmark",
+    "central_carbon_precursors": "central carbon precursor rescue medium",
+    "lower_tca_precursors": "lower glycolysis and TCA-linked precursor rescue medium",
+    "upper_sugar_precursors": "upper sugar phosphate-only debug condition",
+    "energy_redox_only": "energy and redox cofactors only",
+}
+
+
+def _growth_key(row):
+    value = row.get("bio2_rate")
+    return float("-inf") if value is None else value
+
+
+def get_preset_condition_library(model, biomass_reaction_id: str = "bio2"):
+    """Return a small user-facing preset library derived from debug conditions."""
+    debug_library = build_debug_medium_library(model, biomass_reaction_id=biomass_reaction_id)
+    preset_library = {}
+
+    for source_name, target_name in PRESET_LABELS.items():
+        if source_name not in debug_library:
+            continue
+        preset_library[target_name] = {
+            "description": PRESET_DESCRIPTIONS[source_name],
+            "metabolite_ids": list(debug_library[source_name].get("metabolite_ids", [])),
+        }
+
+    return preset_library
+
+
+def run_theoretical_upper_bound(model, biomass_reaction_id: str = "bio2"):
+    """Benchmark the best-case theoretical upper bound using the full oracle condition."""
+    debug_library = build_debug_medium_library(model, biomass_reaction_id=biomass_reaction_id)
+    full_oracle = debug_library["full_oracle"]
+    result = benchmark_bio2_conditions(
+        model,
+        {
+            "theoretical_upper_bound": {
+                "description": (
+                    "best-case benchmark showing how much biomass-like flux the draft model "
+                    "can achieve under idealized input availability"
+                ),
+                "metabolite_ids": list(full_oracle.get("metabolite_ids", [])),
+            }
+        },
+        biomass_reaction_id=biomass_reaction_id,
+    )[0]
+    result["mode"] = "theoretical_upper_bound"
+    return result
+
+
+def run_preset_benchmark(model, biomass_reaction_id: str = "bio2"):
+    """Benchmark the small preset condition library."""
+    preset_library = get_preset_condition_library(model, biomass_reaction_id=biomass_reaction_id)
+    results = benchmark_bio2_conditions(
+        model, preset_library, biomass_reaction_id=biomass_reaction_id
+    )
+    results = sorted(results, key=_growth_key, reverse=True)
+    for row in results:
+        row["mode"] = "preset_conditions"
+    return results
+
+
+def parse_metabolite_ids(value: str):
+    """Parse a comma-separated metabolite list."""
+    if not value:
+        return []
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def build_custom_condition(
+    model,
+    biomass_reaction_id: str = "bio2",
+    from_preset: str = "",
+    metabolite_ids=None,
+    add_metabolites=None,
+    remove_metabolites=None,
+):
+    """Build one custom condition from a preset seed and/or explicit metabolites."""
+    metabolite_ids = list(metabolite_ids or [])
+    add_metabolites = list(add_metabolites or [])
+    remove_metabolites = set(remove_metabolites or [])
+
+    if from_preset:
+        preset_library = get_preset_condition_library(model, biomass_reaction_id=biomass_reaction_id)
+        if from_preset not in preset_library:
+            raise ValueError(f"Unknown preset condition: {from_preset}")
+        metabolite_ids = list(preset_library[from_preset].get("metabolite_ids", [])) + metabolite_ids
+
+    combined = []
+    seen = set()
+    for metabolite_id in metabolite_ids + add_metabolites:
+        if metabolite_id in seen or metabolite_id in remove_metabolites:
+            continue
+        seen.add(metabolite_id)
+        combined.append(metabolite_id)
+
+    return combined
+
+
+def run_custom_condition(
+    model,
+    metabolite_ids,
+    condition_name: str = "custom_condition",
+    biomass_reaction_id: str = "bio2",
+):
+    """Benchmark one user-defined custom condition."""
+    result = benchmark_bio2_conditions(
+        model,
+        {
+            condition_name: {
+                "description": "user-defined custom condition",
+                "metabolite_ids": list(metabolite_ids),
+            }
+        },
+        biomass_reaction_id=biomass_reaction_id,
+    )[0]
+    result["mode"] = "custom_condition"
+    return result

@@ -4,6 +4,26 @@ fungal_modelseed_pipeline
 This file lists the packages needed for the current minimal pipeline and the
 commands to run it from start to finish.
 
+Best current MVP entry points
+-----------------------------
+
+If you want the simplest hackathon flow, use these two scripts:
+
+1. Build and export the draft model
+
+python scripts/run_mvp_pipeline.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa --model-id test_model_rast --use-rast
+
+2. Run one analysis mode
+
+python scripts/analyze_mvp.py --model-dir data/models/test_model_rast --mode theoretical
+python scripts/analyze_mvp.py --model-dir data/models/test_model_rast --mode preset
+python scripts/analyze_mvp.py --model-dir data/models/test_model_rast --mode custom --from-preset rich_debug_medium --condition-name my_custom_condition
+
+Modes:
+- theoretical = best-case theoretical upper bound
+- preset = pre-made benchmark conditions
+- custom = user-defined condition built from metabolite IDs or a preset seed
+
 This project currently uses:
 - modelseedpy
 - pyyaml
@@ -138,6 +158,18 @@ Example:
 python scripts/inspect_oracle_condition.py --model-dir data/models/test_model_rast --condition central_carbon_precursors
 
 
+Recommended hackathon MVP run
+-----------------------------
+
+If you want the cleanest end-to-end run for the current repo:
+
+cd /home/constantinos/projects/Biohacathon/fungal_modelseed_pipeline
+python scripts/run_mvp_pipeline.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa --model-id test_model_rast --use-rast
+python scripts/analyze_mvp.py --model-dir data/models/test_model_rast --mode theoretical
+python scripts/analyze_mvp.py --model-dir data/models/test_model_rast --mode preset
+python scripts/analyze_mvp.py --model-dir data/models/test_model_rast --mode custom --from-preset rich_debug_medium --condition-name my_custom_condition
+
+
 All commands in one block
 -------------------------
 
@@ -224,3 +256,18 @@ bio2 benchmark:
 Chosen-condition inspection:
 - data/models/MODEL_ID/selected_condition_central_carbon_precursors.json
 - data/models/MODEL_ID/selected_condition_central_carbon_precursors.txt
+
+Hackathon MVP outputs:
+- data/models/MODEL_ID/mvp_summary.json
+- data/models/MODEL_ID/mvp_summary.txt
+- data/models/MODEL_ID/theoretical_upper_bound.json
+- data/models/MODEL_ID/theoretical_upper_bound.txt
+- data/models/MODEL_ID/theoretical_upper_bound.png
+- data/models/MODEL_ID/preset_conditions.csv
+- data/models/MODEL_ID/preset_conditions.json
+- data/models/MODEL_ID/preset_conditions.png
+- data/models/MODEL_ID/preset_conditions.txt
+- data/models/MODEL_ID/custom_condition_<name>.json
+- data/models/MODEL_ID/custom_condition_<name>.txt
+- data/models/MODEL_ID/custom_condition_<name>.png
+- data/models/MODEL_ID/mvp_mode_comparison.png
