@@ -129,13 +129,18 @@ def main() -> int:
     print(f"Objective: {mvp_summary['objective']}")
     print(f"Baseline status: {mvp_summary['baseline_status']}")
     print(f"Baseline objective value: {mvp_summary['baseline_objective_value']}")
-    print("Next steps:")
+    print("Official next steps:")
     print(f"python scripts/analyze_mvp.py --model-dir {model_dir} --mode theoretical")
     print(f"python scripts/analyze_mvp.py --model-dir {model_dir} --mode preset")
     print(
         "python scripts/analyze_mvp.py "
         f"--model-dir {model_dir} --mode custom --from-preset rich_debug_medium "
         "--condition-name my_custom_condition"
+    )
+    print(f"python scripts/validate_mvp.py --model-dir {model_dir}")
+    print(
+        "python scripts/validate_mvp.py "
+        f"--model-dir {model_dir} --mode theoretical_upper_bound --biomass-reaction bio2"
     )
     return 0
 

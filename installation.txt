@@ -1,20 +1,13 @@
-Run 
-uvicorn backend.main:app --reload --port 8000
-
-In a new terminal
-streamlit run frontend_app.py
-
-
 fungal_modelseed_pipeline
 =========================
 
 This file lists the packages needed for the current minimal pipeline and the
 commands to run it from start to finish.
 
-Best current MVP entry points
------------------------------
+Official MVP entry points
+-------------------------
 
-If you want the simplest hackathon flow, use these two scripts:
+Treat these as the main product interface:
 
 1. Build and export the draft model
 
@@ -25,13 +18,33 @@ python scripts/run_mvp_pipeline.py --input ncbi_dataset/data/GCA_000182925.2/pro
 python scripts/analyze_mvp.py --model-dir data/models/test_model_rast --mode theoretical
 python scripts/analyze_mvp.py --model-dir data/models/test_model_rast --mode preset
 python scripts/analyze_mvp.py --model-dir data/models/test_model_rast --mode custom --from-preset rich_debug_medium --condition-name my_custom_condition
+
+3. Run validation
+
 python scripts/validate_mvp.py --model-dir data/models/test_model_rast
 python scripts/validate_mvp.py --model-dir data/models/test_model_rast --mode theoretical_upper_bound --biomass-reaction bio2
 
-Modes:
-- theoretical = best-case theoretical upper bound
-- preset = pre-made benchmark conditions
-- custom = user-defined condition built from metabolite IDs or a preset seed
+Standard user-facing labels:
+- Theoretical Upper Bound
+- Preset Conditions
+- Custom Condition
+- Validation
+
+Important wording:
+- Theoretical Upper Bound = best-case benchmark, not a wet-lab medium recommendation
+- Preset Conditions = comparison library for the draft model
+- Custom Condition = user-defined comparison condition
+- Validation = draft-model quality checks
+
+Recommended live demo outputs
+-----------------------------
+
+If you need a small set of files to show in a presentation, open these:
+
+- data/models/test_model_rast/mvp_mode_comparison.png
+- data/models/test_model_rast/preset_conditions.png
+- data/models/test_model_rast/theoretical_upper_bound_conditions.txt
+- data/models/test_model_rast/theoretical_upper_bound_validation_dashboard.png
 
 This project currently uses:
 - modelseedpy

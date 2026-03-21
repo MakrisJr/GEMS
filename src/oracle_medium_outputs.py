@@ -10,6 +10,7 @@ import pandas as pd
 
 from .logging_utils import get_logger
 from .plot_utils import PALETTE, save_ranked_barh_plot
+from .report_utils import make_report, make_section
 
 
 logger = get_logger(__name__)
@@ -26,18 +27,32 @@ def save_oracle_medium_results(results, outdir: str):
         json.dumps(results, indent=2), encoding="utf-8"
     )
 
-    lines = ["This is a draft model debugging step before media optimisation."]
+    summary_lines = [
+        "Semi-artificial debug conditions showing which precursor sets can rescue biomass-like flux."
+    ]
     if results:
         best = results[0]
-        lines.append(f"best_condition: {best.get('condition', '')}")
-        lines.append(f"best_predicted_growth: {best.get('predicted_growth', '')}")
+        summary_lines.extend(
+            [
+                f"Best condition: {best.get('condition', '')}",
+                f"Best predicted growth: {best.get('predicted_growth', '')}",
+            ]
+        )
+    ranking_lines = []
     for row in results:
-        lines.append(
+        ranking_lines.append(
             f"{row['condition']}: growth={row['predicted_growth']}, status={row['status']}, n_added_boundaries={row['n_added_boundaries']}"
         )
 
     (output_dir / "oracle_medium_screen.txt").write_text(
-        "\n".join(lines) + "\n", encoding="utf-8"
+        make_report(
+            "Oracle-Derived Debug Media Report",
+            [
+                make_section("Summary", summary_lines),
+                make_section("Ranked Conditions", ranking_lines),
+            ],
+        ),
+        encoding="utf-8",
     )
     logger.info("Saved oracle-medium screening results to %s", output_dir)
 

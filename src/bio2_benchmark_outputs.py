@@ -12,6 +12,7 @@ import pandas as pd
 
 from .logging_utils import get_logger
 from .plot_utils import PALETTE, annotate_barh, finalize_figure, style_axis, wrap_label
+from .report_utils import make_report, make_section
 
 
 logger = get_logger(__name__)
@@ -46,24 +47,35 @@ def save_bio2_benchmark_results(results, outdir: str):
         json.dumps(results, indent=2), encoding="utf-8"
     )
 
-    lines = [
-        "This is a draft model debugging step before media optimisation.",
+    summary_lines = [
+        "First-pass bio2 benchmarking on a draft model.",
         "The reported yield is a debug proxy based on total added boundary flux.",
     ]
     if results:
         best = results[0]
-        lines.append(f"best_condition: {best.get('condition', '')}")
-        lines.append(f"best_bio2_rate: {best.get('bio2_rate', '')}")
-        lines.append(
-            "best_bio2_yield_on_total_added_flux: "
-            f"{best.get('bio2_yield_on_total_added_flux', '')}"
+        summary_lines.extend(
+            [
+                f"Best condition: {best.get('condition', '')}",
+                f"Best bio2 rate: {best.get('bio2_rate', '')}",
+                f"Best yield proxy: {best.get('bio2_yield_on_total_added_flux', '')}",
+            ]
         )
+    ranking_lines = []
     for row in table_rows:
-        lines.append(
+        ranking_lines.append(
             f"{row['condition']}: rate={row['bio2_rate']}, yield={row['bio2_yield_on_total_added_flux']}, status={row['status']}"
         )
 
-    (output_dir / "bio2_benchmark.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (output_dir / "bio2_benchmark.txt").write_text(
+        make_report(
+            "bio2 Benchmark Report",
+            [
+                make_section("Summary", summary_lines),
+                make_section("Ranked Conditions", ranking_lines),
+            ],
+        ),
+        encoding="utf-8",
+    )
     logger.info("Saved bio2 benchmark results to %s", output_dir)
 
 

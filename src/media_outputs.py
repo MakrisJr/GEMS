@@ -10,6 +10,7 @@ import pandas as pd
 
 from .logging_utils import get_logger
 from .plot_utils import PALETTE, save_ranked_barh_plot
+from .report_utils import make_report, make_section
 
 
 logger = get_logger(__name__)
@@ -26,17 +27,31 @@ def save_media_results(results, outdir: str):
         json.dumps(results, indent=2), encoding="utf-8"
     )
 
-    lines = ["This is a first-pass media screen on a draft model."]
+    summary_lines = ["First-pass condition comparison on a draft model."]
     if results:
         best = results[0]
-        lines.append(f"best_condition: {best.get('condition', '')}")
-        lines.append(f"best_predicted_growth: {best.get('predicted_growth', '')}")
+        summary_lines.extend(
+            [
+                f"Best condition: {best.get('condition', '')}",
+                f"Best predicted growth: {best.get('predicted_growth', '')}",
+            ]
+        )
+    ranking_lines = []
     for row in results:
-        lines.append(
+        ranking_lines.append(
             f"{row['condition']}: growth={row['predicted_growth']}, status={row['status']}, missing_exchange_ids={row['missing_exchange_ids']}"
         )
 
-    (output_dir / "media_screen.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (output_dir / "media_screen.txt").write_text(
+        make_report(
+            "Media Screen Report",
+            [
+                make_section("Summary", summary_lines),
+                make_section("Ranked Conditions", ranking_lines),
+            ],
+        ),
+        encoding="utf-8",
+    )
     logger.info("Saved media screening results to %s", output_dir)
 
 

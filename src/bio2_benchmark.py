@@ -55,6 +55,7 @@ def benchmark_bio2_conditions(model, medium_library, biomass_reaction_id: str = 
                 results.append(
                     {
                         "condition": condition,
+                        "display_name": config.get("display_name", condition),
                         "description": config.get("description", ""),
                         "biomass_reaction_id": biomass_reaction.id,
                         "bio2_rate": bio2_rate,
@@ -71,6 +72,7 @@ def benchmark_bio2_conditions(model, medium_library, biomass_reaction_id: str = 
                 results.append(
                     {
                         "condition": condition,
+                        "display_name": config.get("display_name", condition),
                         "description": config.get("description", ""),
                         "biomass_reaction_id": biomass_reaction.id,
                         "bio2_rate": None,

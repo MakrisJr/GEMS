@@ -12,6 +12,7 @@ import pandas as pd
 
 from .logging_utils import get_logger
 from .plot_utils import PALETTE, annotate_barh, finalize_figure, style_axis
+from .report_utils import make_report, make_section
 
 
 logger = get_logger(__name__)
@@ -51,24 +52,51 @@ def save_validation_outputs(
     )
 
     validation_context = summary.get("validation_context", {})
-    lines = [
-        "This is an optional draft-model validation step before real media optimisation.",
-        f"validation_mode: {validation_context.get('validation_mode', 'default')}",
-        f"validation_condition: {validation_context.get('condition_name', '')}",
-        f"validation_biomass_reaction: {validation_context.get('biomass_reaction_id', '')}",
-        f"n_added_boundaries: {validation_context.get('n_added_boundaries', 0)}",
-        f"fba_status: {summary.get('fba', {}).get('status', '')}",
-        f"objective_value: {summary.get('fba', {}).get('objective_value', '')}",
-        f"n_dead_end_metabolites: {summary.get('dead_end_metabolites', {}).get('n_dead_end_metabolites', '')}",
-        f"n_produced_only: {summary.get('dead_end_metabolites', {}).get('n_produced_only', '')}",
-        f"n_consumed_only: {summary.get('dead_end_metabolites', {}).get('n_consumed_only', '')}",
-        f"exchange_fva_status: {summary.get('exchange_fva', {}).get('status', '')}",
-        f"n_exchange_reactions: {summary.get('exchange_fva', {}).get('n_exchange_reactions', '')}",
-        f"gene_essentiality_status: {summary.get('gene_essentiality', {}).get('status', '')}",
-        f"n_essential_genes: {summary.get('gene_essentiality', {}).get('n_essential_genes', '')}",
-    ]
+    interpretation_lines = []
+    if summary.get("gene_essentiality", {}).get("status") == "skipped":
+        interpretation_lines.append(
+            "Gene essentiality was skipped because the chosen validation setup did not provide positive baseline growth."
+        )
+    elif summary.get("gene_essentiality", {}).get("status") == "completed":
+        interpretation_lines.append(
+            "Gene essentiality was computed under the selected validation setup."
+        )
+    if validation_context.get("validation_mode") == "theoretical_upper_bound":
+        interpretation_lines.append(
+            "This uses the theoretical upper-bound condition, so the result is best interpreted as a stress test of draft-model capability."
+        )
     _prefixed_path(output_dir, "validation_summary.txt", prefix).write_text(
-        "\n".join(lines) + "\n", encoding="utf-8"
+        make_report(
+            "Validation Summary Report",
+            [
+                make_section(
+                    "Validation Context",
+                    [
+                        "Optional draft-model validation step before real media optimisation.",
+                        f"Mode: {validation_context.get('validation_mode', 'default')}",
+                        f"Condition: {validation_context.get('condition_name', '')}",
+                        f"Biomass reaction: {validation_context.get('biomass_reaction_id', '')}",
+                        f"Temporary boundaries added: {validation_context.get('n_added_boundaries', 0)}",
+                    ],
+                ),
+                make_section(
+                    "Key Results",
+                    [
+                        f"FBA status: {summary.get('fba', {}).get('status', '')}",
+                        f"Objective value: {summary.get('fba', {}).get('objective_value', '')}",
+                        f"Dead-end metabolites: {summary.get('dead_end_metabolites', {}).get('n_dead_end_metabolites', '')}",
+                        f"Produced only: {summary.get('dead_end_metabolites', {}).get('n_produced_only', '')}",
+                        f"Consumed only: {summary.get('dead_end_metabolites', {}).get('n_consumed_only', '')}",
+                        f"Exchange FVA status: {summary.get('exchange_fva', {}).get('status', '')}",
+                        f"Exchange reactions tested: {summary.get('exchange_fva', {}).get('n_exchange_reactions', '')}",
+                        f"Gene essentiality status: {summary.get('gene_essentiality', {}).get('status', '')}",
+                        f"Essential genes found: {summary.get('gene_essentiality', {}).get('n_essential_genes', '')}",
+                    ],
+                ),
+                make_section("Interpretation", interpretation_lines),
+            ],
+        ),
+        encoding="utf-8",
     )
 
     _write_table(

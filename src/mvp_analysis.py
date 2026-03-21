@@ -16,6 +16,14 @@ PRESET_LABELS = {
     "energy_redox_only": "energy_redox_only",
 }
 
+PRESET_DISPLAY_NAMES = {
+    "all_reactants": "Full Precursor Set",
+    "central_carbon_precursors": "Rich Debug Medium",
+    "lower_tca_precursors": "Lower TCA Rescue",
+    "upper_sugar_precursors": "Upper Sugar Only",
+    "energy_redox_only": "Energy Redox Only",
+}
+
 PRESET_DESCRIPTIONS = {
     "all_reactants": "all biomass reactants available as a rich debug benchmark",
     "central_carbon_precursors": "central carbon precursor rescue medium",
@@ -40,6 +48,7 @@ def get_preset_condition_library(model, biomass_reaction_id: str = "bio2"):
             continue
         preset_library[target_name] = {
             "description": PRESET_DESCRIPTIONS[source_name],
+            "display_name": PRESET_DISPLAY_NAMES[source_name],
             "metabolite_ids": list(debug_library[source_name].get("metabolite_ids", [])),
         }
 
@@ -58,12 +67,14 @@ def run_theoretical_upper_bound(model, biomass_reaction_id: str = "bio2"):
                     "best-case benchmark showing how much biomass-like flux the draft model "
                     "can achieve under idealized input availability"
                 ),
+                "display_name": "Theoretical Upper Bound",
                 "metabolite_ids": list(full_oracle.get("metabolite_ids", [])),
             }
         },
         biomass_reaction_id=biomass_reaction_id,
     )[0]
     result["mode"] = "theoretical_upper_bound"
+    result["display_name"] = "Theoretical Upper Bound"
     return result
 
 
@@ -76,6 +87,10 @@ def run_preset_benchmark(model, biomass_reaction_id: str = "bio2"):
     results = sorted(results, key=_growth_key, reverse=True)
     for row in results:
         row["mode"] = "preset_conditions"
+        row["display_name"] = preset_library.get(row["condition"], {}).get(
+            "display_name",
+            row.get("condition", ""),
+        )
     return results
 
 
@@ -128,10 +143,12 @@ def run_custom_condition(
         {
             condition_name: {
                 "description": "user-defined custom condition",
+                "display_name": condition_name,
                 "metabolite_ids": list(metabolite_ids),
             }
         },
         biomass_reaction_id=biomass_reaction_id,
     )[0]
     result["mode"] = "custom_condition"
+    result["display_name"] = condition_name
     return result
