@@ -1,0 +1,42 @@
+{
+  "left": {
+    "label": "Core Template + RAST",
+    "model_dir": "data/models/template_core_mvp_compare_rast",
+    "template_name": "template_core",
+    "template_source": "builtin",
+    "reactions": 112,
+    "metabolites": 119,
+    "genes": 164,
+    "exchanges": 13,
+    "baseline_objective_value": 0.0,
+    "theoretical_biomass_reaction": "bio2",
+    "theoretical_bio2_rate": 66.65535545483192,
+    "theoretical_yield_proxy": 0.0056860019161826475,
+    "preset_best_condition": "Full Precursor Set",
+    "preset_best_rate": 31.79062272001634,
+    "custom_condition": "compare_custom",
+    "custom_rate": 31.790622720016415,
+    "validation_dead_end_metabolites": 24,
+    "validation_added_boundaries": 21
+  },
+  "right": {
+    "label": "Fungal Template + RAST",
+    "model_dir": "data/models/fungi_template_mvp_compare_rast",
+    "template_name": "fungi",
+    "template_source": "local",
+    "reactions": 928,
+    "metabolites": 1121,
+    "genes": 635,
+    "exchanges": 29,
+    "baseline_objective_value": 0.0,
+    "theoretical_biomass_reaction": "bio1",
+    "theoretical_bio2_rate": 33.333333333333336,
+    "theoretical_yield_proxy": 0.004433556020975969,
+    "preset_best_condition": "Full Biomass Support",
+    "preset_best_rate": 33.333333333333336,
+    "custom_condition": "compare_custom",
+    "custom_rate": 31.226115864376748,
+    "validation_dead_end_metabolites": 181,
+    "validation_added_boundaries": 6
+  }
+}

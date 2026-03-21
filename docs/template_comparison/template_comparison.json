@@ -1,0 +1,42 @@
+{
+  "left": {
+    "label": "Core Template",
+    "model_dir": "data/models/template_core_mvp_compare",
+    "template_name": "template_core",
+    "template_source": "builtin",
+    "reactions": 9,
+    "metabolites": 27,
+    "genes": 0,
+    "exchanges": 3,
+    "baseline_objective_value": 0.0,
+    "theoretical_biomass_reaction": "bio2",
+    "theoretical_bio2_rate": 21.44703119470687,
+    "theoretical_yield_proxy": 0.004170091354191296,
+    "preset_best_condition": "Full Precursor Set",
+    "preset_best_rate": 0.0,
+    "custom_condition": "compare_custom",
+    "custom_rate": 0.0,
+    "validation_dead_end_metabolites": 23,
+    "validation_added_boundaries": 21
+  },
+  "right": {
+    "label": "Fungal Template",
+    "model_dir": "data/models/fungi_template_mvp_compare",
+    "template_name": "fungi",
+    "template_source": "local",
+    "reactions": 21,
+    "metabolites": 91,
+    "genes": 0,
+    "exchanges": 5,
+    "baseline_objective_value": 0.0,
+    "theoretical_biomass_reaction": "bio1",
+    "theoretical_bio2_rate": 16.666666666666664,
+    "theoretical_yield_proxy": 0.003317559669795195,
+    "preset_best_condition": "Full Precursor Set",
+    "preset_best_rate": 0.0,
+    "custom_condition": "compare_custom",
+    "custom_rate": 0.0,
+    "validation_dead_end_metabolites": 52,
+    "validation_added_boundaries": 45
+  }
+}

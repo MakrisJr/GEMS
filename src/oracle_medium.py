@@ -6,6 +6,14 @@ This is a draft model debugging step before media optimisation.
 from .oracle_growth import find_biomass_reaction, run_oracle_growth
 
 
+BASIC_BALANCE_PRODUCT_IDS = {
+    "cpd00001_c0",  # H2O
+    "cpd00008_c0",  # ADP
+    "cpd00009_c0",  # phosphate
+    "cpd00067_c0",  # H+
+    "cpd11416_c0",  # Biomass
+}
+
 ENERGY_REDOX_IDS = {
     "cpd00002_c0",  # ATP
     "cpd00001_c0",  # H2O
@@ -35,6 +43,18 @@ LOWER_TCA_IDS = {
     "cpd00032_c0",  # oxaloacetate
     "cpd00024_c0",  # 2-oxoglutarate
 }
+
+
+def _ordered_unique(metabolite_ids):
+    """Return metabolite IDs without duplicates while preserving order."""
+    ordered = []
+    seen = set()
+    for metabolite_id in metabolite_ids:
+        if metabolite_id in seen:
+            continue
+        seen.add(metabolite_id)
+        ordered.append(metabolite_id)
+    return ordered
 
 
 def describe_condition_metabolites(model, metabolite_ids):
@@ -71,11 +91,21 @@ def build_debug_medium_library(model, biomass_reaction_id: str = "bio2"):
         for metabolite, coefficient in biomass_reaction.metabolites.items()
         if coefficient < 0
     ]
+    product_ids = [
+        metabolite.id
+        for metabolite, coefficient in biomass_reaction.metabolites.items()
+        if coefficient > 0 and metabolite.id != "cpd11416_c0"
+    ]
 
     central_carbon_ids = [met_id for met_id in reactant_ids if met_id not in ENERGY_REDOX_IDS]
     upper_sugar_ids = [met_id for met_id in reactant_ids if met_id in UPPER_SUGAR_IDS]
     lower_tca_ids = [met_id for met_id in reactant_ids if met_id in LOWER_TCA_IDS]
     energy_redox_ids = [met_id for met_id in full_oracle_ids if met_id in ENERGY_REDOX_IDS]
+    recycling_core_ids = [
+        met_id for met_id in product_ids if met_id not in BASIC_BALANCE_PRODUCT_IDS
+    ]
+    balance_product_ids = [met_id for met_id in product_ids if met_id in BASIC_BALANCE_PRODUCT_IDS]
+    partial_balance_ids = balance_product_ids[:2] if len(balance_product_ids) > 2 else list(balance_product_ids)
 
     return {
         "full_oracle": {
@@ -101,6 +131,18 @@ def build_debug_medium_library(model, biomass_reaction_id: str = "bio2"):
         "energy_redox_only": {
             "description": "energy and redox cofactors only",
             "metabolite_ids": energy_redox_ids,
+        },
+        "reactants_plus_recycling_core": {
+            "description": "biomass reactants plus recycling product support",
+            "metabolite_ids": _ordered_unique(reactant_ids + recycling_core_ids),
+        },
+        "reactants_plus_energy_balance": {
+            "description": "biomass reactants plus recycling support and partial balance products",
+            "metabolite_ids": _ordered_unique(reactant_ids + recycling_core_ids + partial_balance_ids),
+        },
+        "reactants_plus_full_balance": {
+            "description": "biomass reactants plus full product-balance support",
+            "metabolite_ids": _ordered_unique(reactant_ids + recycling_core_ids + balance_product_ids),
         },
     }
 

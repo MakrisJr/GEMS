@@ -38,6 +38,17 @@ def main() -> int:
     parser.add_argument("--input", required=True, help="Protein FASTA input path.")
     parser.add_argument("--model-id", required=True, help="Model identifier.")
     parser.add_argument("--use-rast", action="store_true", help="Try reconstruction with RAST.")
+    parser.add_argument(
+        "--template-name",
+        default="template_core",
+        help="Template name to use for reconstruction and gapfilling. Use 'fungi' with --template-source local to try the local fungal template.",
+    )
+    parser.add_argument(
+        "--template-source",
+        choices=("builtin", "local"),
+        default="builtin",
+        help="Where to load the template from.",
+    )
     args = parser.parse_args()
 
     input_type = detect_input_type(args.input)
@@ -62,7 +73,11 @@ def main() -> int:
 
     logger.info("Building draft model from %s", input_path)
     model = build_draft_model_from_protein_fasta(
-        str(input_path), args.model_id, use_rast=args.use_rast
+        str(input_path),
+        args.model_id,
+        use_rast=args.use_rast,
+        template_name=args.template_name,
+        template_source=args.template_source,
     )
     draft_summary = summarize_model(model)
     draft_summary["input_path"] = str(input_path)
@@ -72,7 +87,11 @@ def main() -> int:
 
     logger.info("Running best-effort gapfill and export")
     before_model = model.copy()
-    after_model = gapfill_model_minimally(model)
+    after_model = gapfill_model_minimally(
+        model,
+        template_name=args.template_name,
+        template_source=args.template_source,
+    )
     gapfill_summary = summarize_gapfill(before_model, after_model)
     save_gapfill_summary(gapfill_summary, str(model_dir / "gapfill_summary.json"))
 
@@ -114,12 +133,16 @@ def main() -> int:
         "baseline_status": baseline_result.get("status", ""),
         "baseline_objective_value": baseline_result.get("objective_value", None),
         "inspection_success": inspection_success,
+        "template_name": draft_summary.get("template_name", args.template_name),
+        "template_source": draft_summary.get("template_source", args.template_source),
     }
     save_mvp_summary(mvp_summary, str(model_dir))
 
     print("Fungal GEM MVP pipeline complete.")
     print(f"Model ID: {args.model_id}")
     print(f"Input path: {input_path}")
+    print(f"Template name: {mvp_summary['template_name']}")
+    print(f"Template source: {mvp_summary['template_source']}")
     print(f"Model directory: {model_dir}")
     print(f"Exported model path: {exported_model_path}")
     print(f"Reactions: {mvp_summary['n_reactions']}")

@@ -21,6 +21,12 @@ These are the 3 commands to treat as the main product interface.
 python scripts/run_mvp_pipeline.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa --model-id test_model_rast --use-rast
 ```
 
+To try the local fungal template instead of the built-in core template:
+
+```bash
+python scripts/run_mvp_pipeline.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa --model-id test_model_fungi --use-rast --template-name fungi --template-source local
+```
+
 2. Run one analysis mode
 
 ```bash
@@ -62,6 +68,7 @@ If you are presenting the project live, these are the most useful files to open:
 
 ## Current Scope
 - Build a draft model from protein FASTA
+- Choose between the built-in core template and the local fungal template at build time
 - Export it for COBRApy
 - Benchmark a small set of conditions
 - Inspect theoretical, preset, and custom outputs

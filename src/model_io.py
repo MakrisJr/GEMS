@@ -25,6 +25,9 @@ def save_model_basic_text(summary: dict, outpath: str):
     lines = [
         f"model_id: {summary.get('model_id', '')}",
         f"input_path: {summary.get('input_path', '')}",
+        f"template_name: {summary.get('template_name', '')}",
+        f"template_source: {summary.get('template_source', '')}",
+        f"template_path: {summary.get('template_path', '')}",
         f"n_reactions: {summary.get('n_reactions', '')}",
         f"n_metabolites: {summary.get('n_metabolites', '')}",
         f"n_genes: {summary.get('n_genes', '')}",

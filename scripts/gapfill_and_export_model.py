@@ -30,11 +30,19 @@ def _load_existing_or_rebuild_model(model_dir: Path):
     if not input_path.is_absolute():
         input_path = PROJECT_ROOT / input_path
     use_rast = bool(summary.get("use_rast", False))
+    template_name = summary.get("template_name", "template_core") or "template_core"
+    template_source = summary.get("template_source", "builtin") or "builtin"
 
     from src.reconstruction import build_draft_model_from_protein_fasta
 
     try:
-        return build_draft_model_from_protein_fasta(str(input_path), model_id, use_rast=use_rast)
+        return build_draft_model_from_protein_fasta(
+            str(input_path),
+            model_id,
+            use_rast=use_rast,
+            template_name=template_name,
+            template_source=template_source,
+        )
     except Exception:
         pass
 
@@ -56,7 +64,13 @@ def _load_existing_or_rebuild_model(model_dir: Path):
         except Exception:
             pass
 
-    return build_draft_model_from_protein_fasta(str(input_path), model_id, use_rast=use_rast)
+    return build_draft_model_from_protein_fasta(
+        str(input_path),
+        model_id,
+        use_rast=use_rast,
+        template_name=template_name,
+        template_source=template_source,
+    )
 
 
 def main() -> int:
@@ -76,7 +90,19 @@ def main() -> int:
     model = _load_existing_or_rebuild_model(model_dir)
     before_model = model.copy()
 
-    after_model = gapfill_model_minimally(model)
+    summary_path = model_dir / "model_summary.json"
+    template_name = "template_core"
+    template_source = "builtin"
+    if summary_path.exists():
+        saved_summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        template_name = saved_summary.get("template_name", template_name) or template_name
+        template_source = saved_summary.get("template_source", template_source) or template_source
+
+    after_model = gapfill_model_minimally(
+        model,
+        template_name=template_name,
+        template_source=template_source,
+    )
     summary = summarize_gapfill(before_model, after_model)
 
     save_gapfill_summary(summary, str(model_dir / "gapfill_summary.json"))
@@ -93,6 +119,8 @@ def main() -> int:
 
     print("This is still a draft model. Gapfilling is a best-effort step in this minimal version.")
     print(f"Model directory: {model_dir}")
+    print(f"Template name: {summary['template_name']}")
+    print(f"Template source: {summary['template_source']}")
     print(f"Gapfill attempted: {summary['gapfill_attempted']}")
     print(f"Gapfill success: {summary['gapfill_success']}")
     print(f"Reactions before/after: {summary['reactions_before']} -> {summary['reactions_after']}")

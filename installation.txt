@@ -13,6 +13,10 @@ Treat these as the main product interface:
 
 python scripts/run_mvp_pipeline.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa --model-id test_model_rast --use-rast
 
+Optional fungal-template build:
+
+python scripts/run_mvp_pipeline.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa --model-id test_model_fungi --use-rast --template-name fungi --template-source local
+
 2. Run one analysis mode
 
 python scripts/analyze_mvp.py --model-dir data/models/test_model_rast --mode theoretical
@@ -107,6 +111,10 @@ Example:
 
 python scripts/build_draft_model.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa --model-id test_model_rast --use-rast
 
+Example using the local fungal template:
+
+python scripts/build_draft_model.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa --model-id test_model_fungi --use-rast --template-name fungi --template-source local
+
 4. Gapfill and export the draft model
 
 python scripts/gapfill_and_export_model.py --model-dir data/models/MODEL_ID
@@ -187,6 +195,7 @@ If you want the cleanest end-to-end run for the current repo:
 
 cd /home/constantinos/projects/Biohacathon/fungal_modelseed_pipeline
 python scripts/run_mvp_pipeline.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa --model-id test_model_rast --use-rast
+python scripts/run_mvp_pipeline.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa --model-id test_model_fungi --use-rast --template-name fungi --template-source local
 python scripts/analyze_mvp.py --model-dir data/models/test_model_rast --mode theoretical
 python scripts/analyze_mvp.py --model-dir data/models/test_model_rast --mode preset
 python scripts/analyze_mvp.py --model-dir data/models/test_model_rast --mode custom --from-preset rich_debug_medium --condition-name my_custom_condition
@@ -201,6 +210,7 @@ cd /home/constantinos/projects/Biohacathon/fungal_modelseed_pipeline
 python scripts/prepare_input.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa
 python scripts/first_modelseed_step.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa
 python scripts/build_draft_model.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa --model-id test_model_rast --use-rast
+python scripts/build_draft_model.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa --model-id test_model_fungi --use-rast --template-name fungi --template-source local
 python scripts/gapfill_and_export_model.py --model-dir data/models/test_model_rast
 python scripts/inspect_with_cobra.py --model-dir data/models/test_model_rast
 python scripts/screen_media.py --model-dir data/models/test_model_rast --media config/media_library.yml

@@ -5,21 +5,90 @@ import json
 import requests
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 from datetime import datetime
 from pathlib import Path
 
-from backend.config import STRAINS, TARGET_GROWTH, TARGET_BIOMASS, TARGET_BYPRODUCTS, TARGET_SCORE, ALL_TARGETS
-from backend.data_loader import load_combined, get_dataset_stats
-from backend.model_trainer import train_all, get_training_metadata
-from backend.recommender import recommend
-from backend.lab_exporter import recommendations_to_excel
-from backend.data_ingestion import ingest_results
-from backend.retrainer import retrain, get_retrain_history, compare_rounds, get_current_round
+PLOTLY_IMPORT_ERROR = None
+try:
+    import plotly.express as px
+except Exception as exc:
+    px = None
+    PLOTLY_IMPORT_ERROR = exc
+
+ML_BACKEND_ERROR = None
+
+try:
+    from backend.config import (
+        STRAINS,
+        TARGET_GROWTH,
+        TARGET_BIOMASS,
+        TARGET_BYPRODUCTS,
+        TARGET_SCORE,
+        ALL_TARGETS,
+    )
+    from backend.data_loader import load_combined, get_dataset_stats
+    from backend.model_trainer import train_all, get_training_metadata
+    from backend.recommender import recommend
+    from backend.lab_exporter import recommendations_to_excel
+    from backend.data_ingestion import ingest_results
+    from backend.retrainer import retrain, get_retrain_history, compare_rounds, get_current_round
+except Exception as exc:
+    ML_BACKEND_ERROR = exc
+    STRAINS = []
+    TARGET_GROWTH = TARGET_BIOMASS = TARGET_BYPRODUCTS = TARGET_SCORE = None
+    ALL_TARGETS = []
+
+    def load_combined():
+        return pd.DataFrame()
+
+    def get_dataset_stats(_df):
+        return {"total_rows": 0, "synthetic_rows": 0, "real_rows": 0}
+
+    def get_training_metadata():
+        return None
+
+    def get_current_round():
+        return 0
+
+    def compare_rounds():
+        return []
+
+    def get_retrain_history():
+        return []
+
+    def _raise_ml_backend_error(*_args, **_kwargs):
+        raise RuntimeError(
+            "ML recommender dependencies are unavailable in this environment. "
+            f"Original import error: {ML_BACKEND_ERROR}"
+        )
+
+    train_all = _raise_ml_backend_error
+    recommend = _raise_ml_backend_error
+    recommendations_to_excel = _raise_ml_backend_error
+    ingest_results = _raise_ml_backend_error
+    retrain = _raise_ml_backend_error
+
+if ML_BACKEND_ERROR is None and px is None:
+    ML_BACKEND_ERROR = RuntimeError(
+        f"plotly is unavailable in this environment: {PLOTLY_IMPORT_ERROR}"
+    )
 
 st.set_page_config(page_title="GEMS", page_icon="🍄", layout="wide")
 
 DATA_MODELS_DIR = Path(__file__).resolve().parent / "data" / "models"
+
+TEMPLATE_OPTIONS = {
+    "Core Template (built-in)": ("template_core", "builtin"),
+    "Fungal Template (local ModelSEEDDatabase)": ("fungi", "local"),
+}
+
+CUSTOM_PRESET_OPTIONS = {
+    "full_precursor_set": "Full Precursor Set / Full Biomass Support",
+    "rich_debug_medium": "Rich Debug Medium / Balanced Biomass Support",
+    "lower_tca_rescue": "Lower TCA Rescue / Recycling Core Support",
+    "upper_sugar_only": "Upper Sugar Only / Reactants Only",
+    "energy_redox_only": "Energy Redox Only",
+}
 
 # ── Session state init ──────────────────────────
 if "recs" not in st.session_state:
@@ -144,9 +213,10 @@ with gem_tab:
                     key="run_custom_cond_name",
                 )
             with c2:
-                custom_preset_seed_run = st.text_input(
+                custom_preset_seed_run = st.selectbox(
                     "Preset seed",
-                    value="rich_debug_medium",
+                    list(CUSTOM_PRESET_OPTIONS),
+                    format_func=lambda key: f"{CUSTOM_PRESET_OPTIONS[key]} ({key})",
                     key="run_custom_seed",
                 )
             custom_metabolite_ids_run = st.text_area(
@@ -156,17 +226,30 @@ with gem_tab:
             )
 
         use_rast = st.checkbox(
-            "Use RAST annotations (optional, slower)",
-            value=False,
+            "Use RAST annotations (recommended, slower)",
+            value=True,
             key="run_use_rast",
         )
+
+        template_label = st.selectbox(
+            "Template",
+            list(TEMPLATE_OPTIONS),
+            index=0,
+            help="Choose the reconstruction template used to build the draft model.",
+            key="run_template_choice",
+        )
+        template_name, template_source = TEMPLATE_OPTIONS[template_label]
 
         if st.button("▶ Run Pipeline", type="primary"):
             try:
                 with st.spinner("Running pipeline…"):
                     # 2. POST to /run with file as multipart upload
                     files = {"file": (uploaded_faa.name, uploaded_faa.getvalue(), "application/octet-stream")}
-                    data = {"use_rast": "true" if use_rast else "false"}
+                    data = {
+                        "use_rast": "true" if use_rast else "false",
+                        "template_name": template_name,
+                        "template_source": template_source,
+                    }
                     run_resp = requests.post(
                         "http://localhost:8000/run",
                         files=files,
@@ -185,7 +268,12 @@ with gem_tab:
                             "preset_seed": custom_preset_seed_run,
                         }
                         if custom_metabolite_ids_run.strip():
-                            custom_payload["metabolite_ids"] = custom_metabolite_ids_run.strip()
+                            cleaned_metabolites = ",".join(
+                                part.strip()
+                                for part in custom_metabolite_ids_run.replace("\n", ",").split(",")
+                                if part.strip()
+                            )
+                            custom_payload["metabolite_ids"] = cleaned_metabolites
                         custom_resp = requests.post(
                             "http://localhost:8000/run/custom",
                             data=custom_payload,
@@ -273,10 +361,12 @@ with gem_tab:
                 cols = st.columns(4)
                 card_items = [
                     ("Model ID", summary.get("model_id", selected_model)),
-                    ("Reactions", summary.get("reactions", "—")),
-                    ("Metabolites", summary.get("metabolites", "—")),
-                    ("Genes", summary.get("genes", "—")),
-                    ("Exchanges", summary.get("exchanges", "—")),
+                    ("Template", summary.get("template_name", "—")),
+                    ("Template Source", summary.get("template_source", "—")),
+                    ("Reactions", summary.get("n_reactions", "—")),
+                    ("Metabolites", summary.get("n_metabolites", "—")),
+                    ("Genes", summary.get("n_genes", "—")),
+                    ("Exchanges", summary.get("n_exchanges", "—")),
                     ("Baseline Status", summary.get("baseline_status", "—")),
                     ("Baseline Objective", summary.get("baseline_objective_value", "—")),
                 ]
@@ -304,7 +394,8 @@ with gem_tab:
             st.subheader("Step 2 — Theoretical Upper Bound")
             st.caption(
                 "Best-case benchmark — not a wet-lab medium recommendation. "
-                "All exchange reactions are opened to find the maximum possible biomass flux. "
+                "Temporary biomass-support boundaries are added around the selected biomass-like reaction "
+                "to estimate the maximum possible draft-model flux. "
                 "Command: `python scripts/analyze_mvp.py --model-dir data/models/MODEL_ID --mode theoretical`"
             )
 
@@ -313,36 +404,28 @@ with gem_tab:
                 caption="Theoretical Upper Bound Plot",
             )
 
-            txt_path = mdir / "theoretical_upper_bound.txt"
-            if txt_path.exists():
-                text_content = txt_path.read_text(encoding="utf-8")
-                lines = [ln.strip() for ln in text_content.splitlines() if ln.strip()]
-
-                summary_keys = {
-                    "Condition": None,
-                    "Status": None,
-                    "Predicted bio2 rate": None,
-                    "Yield proxy": None,
-                    "Temporary boundaries added": None,
-                }
-                for line in lines:
-                    for key in summary_keys:
-                        if key.lower() in line.lower() and ":" in line:
-                            summary_keys[key] = line.split(":", 1)[1].strip()
-
-                filled = {k: v for k, v in summary_keys.items() if v}
-                if filled:
-                    st.subheader("Summary")
-                    s_cols = st.columns(len(filled))
-                    for i, (k, v) in enumerate(filled.items()):
-                        s_cols[i].metric(label=k, value=v)
-                else:
-                    _show_text_or_missing(txt_path)
+            theo_json = _show_json_or_missing(mdir / "theoretical_upper_bound.json")
+            if theo_json:
+                st.subheader("Summary")
+                metrics = [
+                    ("Condition", theo_json.get("display_name", theo_json.get("condition", "—"))),
+                    ("Biomass Reaction", theo_json.get("biomass_reaction_id", "—")),
+                    ("Status", theo_json.get("status", "—")),
+                    ("Predicted Rate", theo_json.get("bio2_rate", "—")),
+                    ("Yield Proxy", theo_json.get("bio2_yield_on_total_added_flux", "—")),
+                    ("Added Boundaries", theo_json.get("n_added_boundaries", "—")),
+                ]
+                s_cols = st.columns(3)
+                for i, (label, value) in enumerate(metrics):
+                    s_cols[i % 3].metric(label=label, value=str(value))
             else:
-                st.info("📂 Text file not yet available: `theoretical_upper_bound.txt`")
+                st.info("📂 JSON summary not yet available: `theoretical_upper_bound.json`")
+
+            with st.expander("Text Summary"):
+                _show_text_or_missing(mdir / "theoretical_upper_bound.txt")
 
             st.subheader("Boundary Conditions Table")
-            st.caption("Exchange reactions activated in the theoretical upper-bound run.")
+            st.caption("Temporary biomass-support boundaries used in the optimized theoretical run.")
             _show_csv_or_missing(
                 mdir / "theoretical_upper_bound_conditions.csv",
                 columns=["metabolite_name", "metabolite_id", "boundary_id", "flux", "abs_flux"],
@@ -356,8 +439,8 @@ with gem_tab:
         with sub_preset:
             st.subheader("Step 3 — Preset Conditions")
             st.caption(
-                "Comparison library for the draft model — tests a curated set of standard media "
-                "conditions (e.g. rich, minimal, complex) against the model. "
+                "Comparison library for the draft model — tests a small model-specific set of "
+                "biomass-support conditions derived from the current biomass reaction. "
                 "Command: `python scripts/analyze_mvp.py --model-dir data/models/MODEL_ID --mode preset`"
             )
 
@@ -403,12 +486,13 @@ with gem_tab:
             )
             preset_seed = st.selectbox(
                 "Preset seed",
-                ["rich_debug_medium", "minimal_glucose", "complex_medium"],
+                list(CUSTOM_PRESET_OPTIONS),
+                format_func=lambda key: f"{CUSTOM_PRESET_OPTIONS[key]} ({key})",
                 key="custom_preset_seed",
             )
             metabolite_ids = st.text_area(
-                "Metabolite IDs (one per line)",
-                placeholder="cpd00001\ncpd00067",
+                "Metabolite IDs (comma-separated or one per line)",
+                placeholder="cpd00001, cpd00067",
                 key="custom_metabolite_ids",
             )
 
@@ -423,16 +507,20 @@ with gem_tab:
             custom_data = _show_json_or_missing(custom_json)
             if custom_data:
                 st.subheader("Custom Condition Summary")
-                summary_fields = ["condition", "status", "bio2_rate", "yield_proxy"]
+                summary_fields = [
+                    ("Condition", custom_data.get("display_name", custom_data.get("condition", "—"))),
+                    ("Status", custom_data.get("status", "—")),
+                    ("Predicted Rate", custom_data.get("bio2_rate", "—")),
+                    ("Yield Proxy", custom_data.get("bio2_yield_on_total_added_flux", "—")),
+                ]
                 s_cols = st.columns(len(summary_fields))
-                for i, field in enumerate(summary_fields):
-                    val = custom_data.get(field, "—")
-                    s_cols[i].metric(label=field.replace("_", " ").title(), value=str(val))
+                for i, (label, value) in enumerate(summary_fields):
+                    s_cols[i].metric(label=label, value=str(value))
 
-                if "metabolites" in custom_data:
+                if custom_data.get("metabolite_ids"):
                     st.subheader("Metabolites")
                     st.dataframe(
-                        pd.DataFrame(custom_data["metabolites"]),
+                        pd.DataFrame({"metabolite_id": custom_data["metabolite_ids"]}),
                         use_container_width=True,
                         hide_index=True,
                     )
@@ -470,15 +558,21 @@ with gem_tab:
 
             val_data = _show_json_or_missing(val_json_path)
             if val_data:
+                fba = val_data.get("fba", {})
+                dead_end = val_data.get("dead_end_metabolites", {})
+                exchange_fva = val_data.get("exchange_fva", {})
+                gene_essentiality = val_data.get("gene_essentiality", {})
+                validation_context = val_data.get("validation_context", {})
                 val_fields = [
-                    ("FBA Status", val_data.get("fba_status", "—")),
-                    ("Objective Value", val_data.get("objective_value", "—")),
-                    ("Dead-end Metabolites", val_data.get("dead_end_metabolites", "—")),
-                    ("Produced Only", val_data.get("produced_only", "—")),
-                    ("Consumed Only", val_data.get("consumed_only", "—")),
-                    ("Exchange Reactions Tested", val_data.get("exchange_reactions_tested", "—")),
-                    ("Gene Essentiality Status", val_data.get("gene_essentiality_status", "—")),
-                    ("Essential Genes Found", val_data.get("essential_genes_found", "—")),
+                    ("Biomass Reaction", validation_context.get("biomass_reaction_id", "—")),
+                    ("FBA Status", fba.get("status", "—")),
+                    ("Objective Value", fba.get("objective_value", "—")),
+                    ("Dead-end Metabolites", dead_end.get("n_dead_end_metabolites", "—")),
+                    ("Produced Only", dead_end.get("n_produced_only", "—")),
+                    ("Consumed Only", dead_end.get("n_consumed_only", "—")),
+                    ("Exchange Reactions Tested", exchange_fva.get("n_exchange_reactions", "—")),
+                    ("Gene Essentiality Status", gene_essentiality.get("status", "—")),
+                    ("Essential Genes Found", gene_essentiality.get("n_essential_genes", "—")),
                 ]
                 v_cols = st.columns(4)
                 for i, (label, value) in enumerate(val_fields):
@@ -608,8 +702,18 @@ with gem_tab:
 # TAB B: ML RECOMMENDER  (all existing ML functionality preserved)
 # ════════════════════════════════════════════════
 with ml_tab:
-    with st.expander("ℹ️ How it works", expanded=False):
-        st.markdown("""
+    if ML_BACKEND_ERROR is not None:
+        st.warning(
+            "The ML recommender tab is unavailable in this environment because its optional "
+            f"dependencies could not be imported: {ML_BACKEND_ERROR}"
+        )
+        st.caption(
+            "The GEM pipeline tab still works. Install the missing ML dependencies to re-enable "
+            "training and recommendation features."
+        )
+    else:
+        with st.expander("ℹ️ How it works", expanded=False):
+            st.markdown("""
 **ℹ️ How the ML Recommender works**
 
 1. **Train** — Learns from historical fungal growth experiments (carbon source, nitrogen, pH, temperature, etc.) to predict whether a given media condition supports growth.
@@ -623,164 +727,164 @@ The underlying model uses a **Random Forest classifier** trained on tabular grow
 Features include nutrient composition, environmental parameters, and strain metadata.
 """)
 
-    ml_train, ml_recs, ml_upload = st.tabs(["🤖 Train", "🔬 Recommendations", "🔄 Upload & Retrain"])
+        ml_train, ml_recs, ml_upload = st.tabs(["🤖 Train", "🔬 Recommendations", "🔄 Upload & Retrain"])
 
-    # ── ML sub-tab 1: TRAIN ───────────────────────
-    with ml_train:
-        st.header("Train ML Models")
+        # ── ML sub-tab 1: TRAIN ───────────────────────
+        with ml_train:
+            st.header("Train ML Models")
 
-        if st.button("Train Model", type="primary", use_container_width=True):
-            with st.spinner("Training… (1–2 min)"):
-                try:
-                    meta = train_all()
-                    st.success("Training complete!")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Training failed: {e}")
-
-        meta = get_training_metadata()
-        if meta:
-            st.caption(f"Last trained: {meta.get('timestamp', '')[:19].replace('T', ' ')} UTC  |  {meta['n_samples']} samples")
-
-            rows = []
-            for target, info in meta["targets"].items():
-                for mtype, score in info["cv_r2_scores"].items():
-                    rows.append({"Target": target, "Model": mtype, "CV R²": round(score, 3)})
-            df_scores = pd.DataFrame(rows)
-
-            best_rows = [
-                {"Target": t, "Best Model": info["best_model_type"], "CV R²": round(info["best_cv_r2"], 3)}
-                for t, info in meta["targets"].items()
-            ]
-            st.subheader("Best Model per Target")
-            st.dataframe(pd.DataFrame(best_rows), use_container_width=True, hide_index=True)
-
-            fig = px.bar(
-                df_scores,
-                x="Target",
-                y="CV R²",
-                color="Model",
-                barmode="group",
-                title="Cross-Validation R² by Target & Model",
-                color_discrete_sequence=px.colors.qualitative.Set2,
-            )
-            fig.update_layout(yaxis_range=[0, 1], height=350, margin=dict(t=40, b=10))
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.info("No model trained yet. Click 'Train Model' to begin.")
-
-    # ── ML sub-tab 2: RECOMMENDATIONS ─────────────
-    with ml_recs:
-        st.header("Get Recommendations")
-
-        meta = get_training_metadata()
-        if not meta:
-            st.warning("Please train the model first (Train tab).")
-        else:
-            col1, col2 = st.columns([2, 1])
-            with col1:
-                strain = st.selectbox("Strain", STRAINS)
-            with col2:
-                top_n = st.slider("Top N", 3, 10, 5)
-
-            if st.button("Get Recommendations", type="primary"):
-                with st.spinner("Evaluating 2,000 candidate conditions…"):
+            if st.button("Train Model", type="primary", use_container_width=True):
+                with st.spinner("Training… (1–2 min)"):
                     try:
-                        recs = recommend(strain, top_n=top_n)
-                        st.session_state["recs"][strain] = recs
-                    except Exception as e:
-                        st.error(f"Failed: {e}")
-
-            recs = st.session_state["recs"].get(strain)
-            if recs:
-                all_recs = recs["exploit"] + recs["explore"]
-
-                table_rows = []
-                for r in all_recs:
-                    table_rows.append({
-                        "Rank": r["rank"],
-                        "Type": r["run_type"].upper(),
-                        "Score": round(r["predicted_score"], 4),
-                        "Growth (h⁻¹)": round(r["predicted_growth_rate"], 5),
-                        "Biomass (g/L)": round(r["predicted_biomass"], 3),
-                        "Byproducts (g/L)": round(r["predicted_byproducts"], 3),
-                        "Uncertainty": round(r["uncertainty_score"], 4),
-                        "pH": round(r.get("pH", 0), 2),
-                        "Temp (°C)": round(r.get("temperature_C", 0), 1),
-                        "Carbon Source": r.get("carbon_source", ""),
-                        "N Source": r.get("nitrogen_source", ""),
-                    })
-                st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
-
-                df_r = pd.DataFrame(table_rows)
-                fig2 = px.scatter(
-                    df_r,
-                    x="Uncertainty",
-                    y="Score",
-                    text="Rank",
-                    color="Type",
-                    title="Predicted Score vs Uncertainty",
-                    color_discrete_map={"EXPLOIT": "#2196F3", "EXPLORE": "#FF9800"},
-                )
-                fig2.update_traces(textposition="top center", marker_size=10)
-                fig2.update_layout(height=320, margin=dict(t=40, b=10))
-                st.plotly_chart(fig2, use_container_width=True)
-
-                try:
-                    excel_bytes = recommendations_to_excel(recs)
-                    fname = f"lab_sheet_{strain.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.xlsx"
-                    st.download_button(
-                        "📥 Download Lab Sheet (Excel)",
-                        data=excel_bytes,
-                        file_name=fname,
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    )
-                except Exception as e:
-                    st.error(f"Export error: {e}")
-
-    # ── ML sub-tab 3: UPLOAD & RETRAIN ────────────
-    with ml_upload:
-        st.header("Upload Results & Retrain")
-
-        st.subheader("1 — Upload Lab Results")
-        uploaded = st.file_uploader("Upload filled lab results CSV", type=["csv"])
-
-        if uploaded:
-            try:
-                upload_df = pd.read_csv(uploaded)
-                st.write(f"Loaded {len(upload_df)} rows, {len(upload_df.columns)} columns")
-                st.dataframe(upload_df.head(), use_container_width=True)
-
-                if st.button("✅ Validate & Ingest", type="primary"):
-                    current_round = get_current_round()
-                    ok, msg, updated = ingest_results(upload_df, current_round + 1)
-                    if ok:
-                        st.success(msg)
-                        st.cache_data.clear()
+                        meta = train_all()
+                        st.success("Training complete!")
                         st.rerun()
-                    else:
-                        st.error(msg)
-            except Exception as e:
-                st.error(f"Could not read file: {e}")
+                    except Exception as e:
+                        st.error(f"Training failed: {e}")
 
-        st.subheader("2 — Retrain Model")
-        df2 = load_combined()
-        stats2 = get_dataset_stats(df2)
-        st.caption(
-            f"Dataset: {stats2['total_rows']} rows — {stats2['synthetic_rows']} synthetic, {stats2['real_rows']} real"
-        )
+            meta = get_training_metadata()
+            if meta:
+                st.caption(f"Last trained: {meta.get('timestamp', '')[:19].replace('T', ' ')} UTC  |  {meta['n_samples']} samples")
 
-        desc = st.text_input("Round description (optional)", placeholder="e.g. After first lab batch")
-        if st.button("🔄 Retrain with All Data", type="primary"):
-            with st.spinner("Retraining…"):
+                rows = []
+                for target, info in meta["targets"].items():
+                    for mtype, score in info["cv_r2_scores"].items():
+                        rows.append({"Target": target, "Model": mtype, "CV R²": round(score, 3)})
+                df_scores = pd.DataFrame(rows)
+
+                best_rows = [
+                    {"Target": t, "Best Model": info["best_model_type"], "CV R²": round(info["best_cv_r2"], 3)}
+                    for t, info in meta["targets"].items()
+                ]
+                st.subheader("Best Model per Target")
+                st.dataframe(pd.DataFrame(best_rows), use_container_width=True, hide_index=True)
+
+                fig = px.bar(
+                    df_scores,
+                    x="Target",
+                    y="CV R²",
+                    color="Model",
+                    barmode="group",
+                    title="Cross-Validation R² by Target & Model",
+                    color_discrete_sequence=px.colors.qualitative.Set2,
+                )
+                fig.update_layout(yaxis_range=[0, 1], height=350, margin=dict(t=40, b=10))
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("No model trained yet. Click 'Train Model' to begin.")
+
+        # ── ML sub-tab 2: RECOMMENDATIONS ─────────────
+        with ml_recs:
+            st.header("Get Recommendations")
+
+            meta = get_training_metadata()
+            if not meta:
+                st.warning("Please train the model first (Train tab).")
+            else:
+                col1, col2 = st.columns([2, 1])
+                with col1:
+                    strain = st.selectbox("Strain", STRAINS)
+                with col2:
+                    top_n = st.slider("Top N", 3, 10, 5)
+
+                if st.button("Get Recommendations", type="primary"):
+                    with st.spinner("Evaluating 2,000 candidate conditions…"):
+                        try:
+                            recs = recommend(strain, top_n=top_n)
+                            st.session_state["recs"][strain] = recs
+                        except Exception as e:
+                            st.error(f"Failed: {e}")
+
+                recs = st.session_state["recs"].get(strain)
+                if recs:
+                    all_recs = recs["exploit"] + recs["explore"]
+
+                    table_rows = []
+                    for r in all_recs:
+                        table_rows.append({
+                            "Rank": r["rank"],
+                            "Type": r["run_type"].upper(),
+                            "Score": round(r["predicted_score"], 4),
+                            "Growth (h⁻¹)": round(r["predicted_growth_rate"], 5),
+                            "Biomass (g/L)": round(r["predicted_biomass"], 3),
+                            "Byproducts (g/L)": round(r["predicted_byproducts"], 3),
+                            "Uncertainty": round(r["uncertainty_score"], 4),
+                            "pH": round(r.get("pH", 0), 2),
+                            "Temp (°C)": round(r.get("temperature_C", 0), 1),
+                            "Carbon Source": r.get("carbon_source", ""),
+                            "N Source": r.get("nitrogen_source", ""),
+                        })
+                    st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
+
+                    df_r = pd.DataFrame(table_rows)
+                    fig2 = px.scatter(
+                        df_r,
+                        x="Uncertainty",
+                        y="Score",
+                        text="Rank",
+                        color="Type",
+                        title="Predicted Score vs Uncertainty",
+                        color_discrete_map={"EXPLOIT": "#2196F3", "EXPLORE": "#FF9800"},
+                    )
+                    fig2.update_traces(textposition="top center", marker_size=10)
+                    fig2.update_layout(height=320, margin=dict(t=40, b=10))
+                    st.plotly_chart(fig2, use_container_width=True)
+
+                    try:
+                        excel_bytes = recommendations_to_excel(recs)
+                        fname = f"lab_sheet_{strain.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.xlsx"
+                        st.download_button(
+                            "📥 Download Lab Sheet (Excel)",
+                            data=excel_bytes,
+                            file_name=fname,
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        )
+                    except Exception as e:
+                        st.error(f"Export error: {e}")
+
+        # ── ML sub-tab 3: UPLOAD & RETRAIN ────────────
+        with ml_upload:
+            st.header("Upload Results & Retrain")
+
+            st.subheader("1 — Upload Lab Results")
+            uploaded = st.file_uploader("Upload filled lab results CSV", type=["csv"])
+
+            if uploaded:
                 try:
-                    new_meta = retrain(description=desc)
-                    st.success(f"Retrain complete! Round {get_current_round()}")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Retrain failed: {e}")
+                    upload_df = pd.read_csv(uploaded)
+                    st.write(f"Loaded {len(upload_df)} rows, {len(upload_df.columns)} columns")
+                    st.dataframe(upload_df.head(), use_container_width=True)
 
-        history = compare_rounds()
-        if history:
-            st.subheader("Training History")
-            st.dataframe(pd.DataFrame(history), use_container_width=True, hide_index=True)
+                    if st.button("✅ Validate & Ingest", type="primary"):
+                        current_round = get_current_round()
+                        ok, msg, updated = ingest_results(upload_df, current_round + 1)
+                        if ok:
+                            st.success(msg)
+                            st.cache_data.clear()
+                            st.rerun()
+                        else:
+                            st.error(msg)
+                except Exception as e:
+                    st.error(f"Could not read file: {e}")
+
+            st.subheader("2 — Retrain Model")
+            df2 = load_combined()
+            stats2 = get_dataset_stats(df2)
+            st.caption(
+                f"Dataset: {stats2['total_rows']} rows — {stats2['synthetic_rows']} synthetic, {stats2['real_rows']} real"
+            )
+
+            desc = st.text_input("Round description (optional)", placeholder="e.g. After first lab batch")
+            if st.button("🔄 Retrain with All Data", type="primary"):
+                with st.spinner("Retraining…"):
+                    try:
+                        new_meta = retrain(description=desc)
+                        st.success(f"Retrain complete! Round {get_current_round()}")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Retrain failed: {e}")
+
+            history = compare_rounds()
+            if history:
+                st.subheader("Training History")
+                st.dataframe(pd.DataFrame(history), use_container_width=True, hide_index=True)

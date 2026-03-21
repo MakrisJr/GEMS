@@ -24,6 +24,17 @@ def main() -> int:
     parser.add_argument("--input", required=True, help="Protein FASTA input path.")
     parser.add_argument("--model-id", required=True, help="Model identifier.")
     parser.add_argument("--use-rast", action="store_true", help="Try reconstruction with RAST annotation.")
+    parser.add_argument(
+        "--template-name",
+        default="template_core",
+        help="Template name to use for reconstruction. Use 'template_core' for the built-in default or 'fungi' with --template-source local.",
+    )
+    parser.add_argument(
+        "--template-source",
+        choices=("builtin", "local"),
+        default="builtin",
+        help="Where to load the reconstruction template from.",
+    )
     args = parser.parse_args()
 
     input_type = detect_input_type(args.input)
@@ -50,7 +61,13 @@ def main() -> int:
 
     from src.reconstruction import build_draft_model_from_protein_fasta, summarize_model
 
-    model = build_draft_model_from_protein_fasta(str(input_path), args.model_id, use_rast=args.use_rast)
+    model = build_draft_model_from_protein_fasta(
+        str(input_path),
+        args.model_id,
+        use_rast=args.use_rast,
+        template_name=args.template_name,
+        template_source=args.template_source,
+    )
     summary = summarize_model(model)
     summary["input_path"] = str(input_path)
     summary["use_rast"] = args.use_rast
@@ -61,6 +78,8 @@ def main() -> int:
 
     print(f"Model ID: {summary['model_id']}")
     print(f"Input path: {input_path}")
+    print(f"Template name: {summary['template_name']}")
+    print(f"Template source: {summary['template_source']}")
     print(f"Reactions: {summary['n_reactions']}")
     print(f"Metabolites: {summary['n_metabolites']}")
     print(f"Genes: {summary['n_genes']}")

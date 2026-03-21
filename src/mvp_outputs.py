@@ -297,6 +297,8 @@ def save_mvp_summary(summary: dict, outdir: str):
                     [
                         f"Model ID: {summary.get('model_id', '')}",
                         f"Input path: {summary.get('input_path', '')}",
+                        f"Template name: {summary.get('template_name', '')}",
+                        f"Template source: {summary.get('template_source', '')}",
                         f"Model directory: {summary.get('model_dir', '')}",
                         f"Exported model path: {summary.get('exported_model_path', '')}",
                     ],

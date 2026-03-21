@@ -3,16 +3,42 @@
 This is a draft model debugging step before media optimisation.
 """
 
+import re
+
+
+BIOMASS_NAME_RE = re.compile(r"\bbiomass\b")
+BIO_ID_RE = re.compile(r"^bio\d*$")
+
 
 def find_biomass_reaction(model, preferred_id: str = "bio2"):
     """Choose a biomass-like reaction, preferring bio2 when present."""
     if preferred_id in model.reactions:
         return model.reactions.get_by_id(preferred_id)
 
+    if "bio1" in model.reactions:
+        return model.reactions.get_by_id("bio1")
+
+    candidates = []
     for reaction in model.reactions:
-        search_text = f"{reaction.id} {reaction.name}".lower()
-        if "bio" in search_text or "biomass" in search_text:
-            return reaction
+        if reaction.id.startswith(("EX_", "DM_", "SK_")):
+            continue
+
+        reaction_id = reaction.id.lower()
+        reaction_name = (reaction.name or "").lower()
+        score = None
+        if BIOMASS_NAME_RE.search(reaction_name):
+            score = 0
+        elif BIO_ID_RE.match(reaction_id):
+            score = 1
+        elif reaction_id.startswith("bio"):
+            score = 2
+
+        if score is not None:
+            candidates.append((score, -len(reaction.metabolites), reaction.id, reaction))
+
+    if candidates:
+        candidates.sort()
+        return candidates[0][3]
 
     raise ValueError("No biomass-like reaction found in the model.")
 

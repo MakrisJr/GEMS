@@ -8,13 +8,12 @@ import os
 import tempfile
 
 from .logging_utils import get_logger
+from .template_loader import build_template, describe_template_source
 
 
 os.environ.setdefault("XDG_CACHE_HOME", tempfile.mkdtemp(prefix="fungal_modelseed_cache_"))
 
 from modelseedpy.core.msbuilder import MSBuilder
-from modelseedpy.core.mstemplate import MSTemplateBuilder
-from modelseedpy.helpers import get_template
 
 
 logger = get_logger(__name__)
@@ -26,9 +25,14 @@ def _set_gapfill_metadata(model, attempted: bool, success: bool, error_message: 
     model.gapfill_error_message = error_message
 
 
-def gapfill_model_minimally(model):
+def gapfill_model_minimally(
+    model,
+    template_name: str = "template_core",
+    template_source: str = "builtin",
+):
     """Attempt one public ModelSEEDpy gapfilling step and return a model."""
     _set_gapfill_metadata(model, attempted=True, success=False)
+    template_info = describe_template_source(template_name=template_name, source=template_source)
 
     if "bio1" not in model.reactions:
         message = "Target reaction bio1 was not found. Skipping gapfilling."
@@ -37,13 +41,22 @@ def gapfill_model_minimally(model):
         return model
 
     try:
-        logger.info("Loading template: template_core")
-        template_dict = get_template("template_core")
-        template = MSTemplateBuilder.from_dict(template_dict).build()
+        logger.info(
+            "Loading gapfill template: %s (%s)",
+            template_info["template_name"],
+            template_info["template_source"],
+        )
+        template = build_template(
+            template_name=template_info["template_name"],
+            source=template_info["template_source"],
+        )
 
         logger.info("Attempting minimal gapfilling for draft model %s", model.id)
         updated_model = MSBuilder.gapfill_model(model, "bio1", template, None)
         _set_gapfill_metadata(updated_model, attempted=True, success=True)
+        updated_model.reconstruction_template_name = template_info["template_name"]
+        updated_model.reconstruction_template_source = template_info["template_source"]
+        updated_model.reconstruction_template_path = template_info["template_path"]
         return updated_model
     except Exception as exc:
         message = str(exc)
@@ -64,4 +77,6 @@ def summarize_gapfill(before_model, after_model) -> dict:
         "metabolites_after": len(after_model.metabolites),
         "genes_before": len(before_model.genes),
         "genes_after": len(after_model.genes),
+        "template_name": getattr(after_model, "reconstruction_template_name", ""),
+        "template_source": getattr(after_model, "reconstruction_template_source", ""),
     }

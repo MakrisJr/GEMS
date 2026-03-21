@@ -1,0 +1,3 @@
+label,model_dir,template_name,template_source,reactions,metabolites,genes,exchanges,baseline_objective_value,theoretical_biomass_reaction,theoretical_bio2_rate,theoretical_yield_proxy,preset_best_condition,preset_best_rate,custom_condition,custom_rate,validation_dead_end_metabolites,validation_added_boundaries
+Core Template + RAST,data/models/template_core_mvp_compare_rast,template_core,builtin,112,119,164,13,0.0,bio2,66.65535545483192,0.0056860019161826475,Full Precursor Set,31.79062272001634,compare_custom,31.790622720016415,24,21
+Fungal Template + RAST,data/models/fungi_template_mvp_compare_rast,fungi,local,928,1121,635,29,0.0,bio1,33.333333333333336,0.004433556020975969,Full Biomass Support,33.333333333333336,compare_custom,31.226115864376748,181,6

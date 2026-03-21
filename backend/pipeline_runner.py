@@ -44,8 +44,15 @@ class StepResult:
 class PipelineRunner:
     """Orchestrate the scripted pipeline for a protein FASTA input."""
 
-    def __init__(self, use_rast: bool = True):
+    def __init__(
+        self,
+        use_rast: bool = True,
+        template_name: str = "template_core",
+        template_source: str = "builtin",
+    ):
         self.use_rast = use_rast
+        self.template_name = template_name
+        self.template_source = template_source
         RAW_UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
     @staticmethod
@@ -87,6 +94,10 @@ class PipelineRunner:
                     str(input_faa),
                     "--model-id",
                     model_id,
+                    "--template-name",
+                    self.template_name,
+                    "--template-source",
+                    self.template_source,
                     *(["--use-rast"] if self.use_rast else []),
                 ],
             ),
@@ -145,7 +156,7 @@ class PipelineRunner:
         """Run a single custom-condition analysis (optional MVP step).
 
         Calls: analyze_mvp.py --mode custom --condition-name <name>
-                               --preset-seed <seed> [--metabolites ...]
+                               --from-preset <seed> [--metabolite-ids ...]
         """
         python = sys.executable
         model_dir = DATA_DIR / "models" / model_id
@@ -159,11 +170,11 @@ class PipelineRunner:
             "custom",
             "--condition-name",
             condition_name,
-            "--preset-seed",
+            "--from-preset",
             preset_seed,
         ]
         if metabolite_ids:
-            cmd += ["--metabolites"] + metabolite_ids
+            cmd += ["--metabolite-ids", ",".join(metabolite_ids)]
 
         return self._run_step("analyze_mvp_custom", cmd)
 
@@ -203,6 +214,10 @@ class PipelineRunner:
                     str(input_faa),
                     "--model-id",
                     model_id,
+                    "--template-name",
+                    self.template_name,
+                    "--template-source",
+                    self.template_source,
                     *(["--use-rast"] if self.use_rast else []),
                 ],
             ),

@@ -60,6 +60,8 @@ async def run_pipeline(
     file: UploadFile = File(...),
     model_id: Optional[str] = None,
     use_rast: bool = Form(False),
+    template_name: str = Form("template_core"),
+    template_source: str = Form("builtin"),
 ):
     """Run the 4-step default MVP pipeline.
 
@@ -85,7 +87,11 @@ async def run_pipeline(
     
     save_upload(upload_path, contents)
 
-    runner = PipelineRunner(use_rast=use_rast)
+    runner = PipelineRunner(
+        use_rast=use_rast,
+        template_name=template_name,
+        template_source=template_source,
+    )
     steps = runner.run(upload_path, model_id=model_id)
 
     step_responses = [
