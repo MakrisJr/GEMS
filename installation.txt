@@ -11,6 +11,9 @@ This project currently uses:
 - pandas
 - matplotlib
 
+Also: git clone https://github.com/ModelSEED/ModelSEEDDatabase.git
+
+
 Suggested environment setup
 ---------------------------
 
