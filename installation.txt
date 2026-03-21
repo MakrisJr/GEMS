@@ -2,7 +2,7 @@ fungal_modelseed_pipeline
 =========================
 
 This file lists the packages needed for the current minimal pipeline and the
-commands to run it.
+commands to run it from start to finish.
 
 This project currently uses:
 - modelseedpy
@@ -11,7 +11,12 @@ This project currently uses:
 - pandas
 - matplotlib
 
-Also: git clone https://github.com/ModelSEED/ModelSEEDDatabase.git
+Also required locally:
+- ModelSEEDDatabase
+- a protein FASTA input file (.faa)
+
+Example local clone for the database:
+- git clone https://github.com/ModelSEED/ModelSEEDDatabase.git
 
 
 Suggested environment setup
@@ -23,8 +28,14 @@ conda create -n fungal-modelseed python=3.10 -y
 conda activate fungal-modelseed
 pip install modelseedpy pyyaml cobra pandas matplotlib
 
-Run commands
-------------
+If you already have a conda environment, install the same packages there.
+
+Recommended full run
+--------------------
+
+Replace these with your own values:
+- INPUT_FASTA=ncbi_dataset/data/GCA_000182925.2/protein.faa
+- MODEL_ID=my_model
 
 From the project root:
 
@@ -32,53 +43,184 @@ cd /home/constantinos/projects/Biohacathon/fungal_modelseed_pipeline
 
 1. Detect the input type
 
+python scripts/prepare_input.py --input INPUT_FASTA
+
+Example:
+
 python scripts/prepare_input.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa
 
 2. Load the protein FASTA into a ModelSEEDpy genome object
 
+python scripts/first_modelseed_step.py --input INPUT_FASTA
+
+Example:
+
 python scripts/first_modelseed_step.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa
 
-3. Build a draft model without RAST
+3. Build the draft model with RAST
 
-python scripts/build_draft_model.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa --model-id test_model
+python scripts/build_draft_model.py --input INPUT_FASTA --model-id MODEL_ID --use-rast
 
-4. Build a draft model with RAST
+Example:
 
 python scripts/build_draft_model.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa --model-id test_model_rast --use-rast
 
-5. Gapfill and export the draft model
+4. Gapfill and export the draft model
+
+python scripts/gapfill_and_export_model.py --model-dir data/models/MODEL_ID
+
+Example:
 
 python scripts/gapfill_and_export_model.py --model-dir data/models/test_model_rast
 
-6. Inspect the exported model in COBRApy
+5. Inspect the exported model in COBRApy
+
+python scripts/inspect_with_cobra.py --model-dir data/models/MODEL_ID
+
+Example:
 
 python scripts/inspect_with_cobra.py --model-dir data/models/test_model_rast
 
-7. Run the first-pass media screen
+6. Run the first-pass exchange-based media screen
+
+python scripts/screen_media.py --model-dir data/models/MODEL_ID --media config/media_library.yml
+
+Example:
 
 python scripts/screen_media.py --model-dir data/models/test_model_rast --media config/media_library.yml
 
-8. Diagnose the exchange space
+7. Diagnose the exchange space
+
+python scripts/diagnose_exchange_space.py --model-dir data/models/MODEL_ID
+
+Example:
 
 python scripts/diagnose_exchange_space.py --model-dir data/models/test_model_rast
+
+8. Save a compact growth-debug report
+
+python scripts/debug_growth.py --model-dir data/models/MODEL_ID
+
+Example:
+
+python scripts/debug_growth.py --model-dir data/models/test_model_rast
+
+9. Run the oracle-growth debug check
+
+python scripts/run_oracle_growth.py --model-dir data/models/MODEL_ID
+
+Example:
+
+python scripts/run_oracle_growth.py --model-dir data/models/test_model_rast
+
+10. Screen oracle-derived debug media
+
+python scripts/screen_oracle_medium.py --model-dir data/models/MODEL_ID
+
+Example:
+
+python scripts/screen_oracle_medium.py --model-dir data/models/test_model_rast
+
+11. Benchmark bio2 rate and the debug yield proxy across those conditions
+
+python scripts/benchmark_bio2.py --model-dir data/models/MODEL_ID
+
+Example:
+
+python scripts/benchmark_bio2.py --model-dir data/models/test_model_rast
+
+12. Inspect one ranked debug condition in detail
+
+python scripts/inspect_oracle_condition.py --model-dir data/models/MODEL_ID --condition central_carbon_precursors
+
+Example:
+
+python scripts/inspect_oracle_condition.py --model-dir data/models/test_model_rast --condition central_carbon_precursors
+
+
+All commands in one block
+-------------------------
+
+cd /home/constantinos/projects/Biohacathon/fungal_modelseed_pipeline
+python scripts/prepare_input.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa
+python scripts/first_modelseed_step.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa
+python scripts/build_draft_model.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa --model-id test_model_rast --use-rast
+python scripts/gapfill_and_export_model.py --model-dir data/models/test_model_rast
+python scripts/inspect_with_cobra.py --model-dir data/models/test_model_rast
+python scripts/screen_media.py --model-dir data/models/test_model_rast --media config/media_library.yml
+python scripts/diagnose_exchange_space.py --model-dir data/models/test_model_rast
+python scripts/debug_growth.py --model-dir data/models/test_model_rast
+python scripts/run_oracle_growth.py --model-dir data/models/test_model_rast
+python scripts/screen_oracle_medium.py --model-dir data/models/test_model_rast
+python scripts/benchmark_bio2.py --model-dir data/models/test_model_rast
+python scripts/inspect_oracle_condition.py --model-dir data/models/test_model_rast --condition central_carbon_precursors
+
+
+If your conda environment is not activated
+------------------------------------------
+
+Replace python with:
+
+/home/constantinos/miniconda3/envs/carveme-env/bin/python
+
+
+Optional non-RAST draft build
+-----------------------------
+
+If you want a smaller comparison model without RAST:
+
+python scripts/build_draft_model.py --input ncbi_dataset/data/GCA_000182925.2/protein.faa --model-id test_model
 
 Important output files
 ----------------------
 
-Draft model outputs:
-- data/models/test_model_rast/model_summary.json
-- data/models/test_model_rast/model.xml
+Genome loading:
+- data/intermediate/genome_summary.json
 
-COBRA inspection outputs:
-- data/models/test_model_rast/model_overview.json
-- data/models/test_model_rast/exchanges.csv
-- data/models/test_model_rast/baseline_optimization.json
+Draft reconstruction:
+- data/models/MODEL_ID/model_summary.json
+- data/models/MODEL_ID/model_summary.txt
 
-Media screen outputs:
-- data/models/test_model_rast/media_screen.csv
-- data/models/test_model_rast/media_screen.json
-- data/models/test_model_rast/media_screen.png
+Exported model:
+- data/models/MODEL_ID/model.xml
+- data/models/MODEL_ID/gapfill_summary.json
+- data/models/MODEL_ID/gapfill_summary.txt
 
-Exchange diagnosis outputs:
-- data/models/test_model_rast/exchange_metabolites.csv
-- data/models/test_model_rast/exchange_diagnosis.json
+COBRA inspection:
+- data/models/MODEL_ID/model_overview.json
+- data/models/MODEL_ID/exchanges.csv
+- data/models/MODEL_ID/baseline_optimization.json
+- data/models/MODEL_ID/cobra_inspection.txt
+
+First-pass media screen:
+- data/models/MODEL_ID/media_screen.csv
+- data/models/MODEL_ID/media_screen.json
+- data/models/MODEL_ID/media_screen.png
+- data/models/MODEL_ID/media_screen.txt
+
+Exchange diagnosis:
+- data/models/MODEL_ID/exchange_metabolites.csv
+- data/models/MODEL_ID/exchange_diagnosis.json
+- data/models/MODEL_ID/exchange_diagnosis.txt
+
+Growth debugging:
+- data/models/MODEL_ID/debug_growth.json
+- data/models/MODEL_ID/debug_growth.txt
+- data/models/MODEL_ID/oracle_growth.json
+- data/models/MODEL_ID/oracle_growth.txt
+
+Oracle-derived debug media:
+- data/models/MODEL_ID/oracle_medium_screen.csv
+- data/models/MODEL_ID/oracle_medium_screen.json
+- data/models/MODEL_ID/oracle_medium_screen.png
+- data/models/MODEL_ID/oracle_medium_screen.txt
+
+bio2 benchmark:
+- data/models/MODEL_ID/bio2_benchmark.csv
+- data/models/MODEL_ID/bio2_benchmark.json
+- data/models/MODEL_ID/bio2_benchmark.png
+- data/models/MODEL_ID/bio2_benchmark.txt
+
+Chosen-condition inspection:
+- data/models/MODEL_ID/selected_condition_central_carbon_precursors.json
+- data/models/MODEL_ID/selected_condition_central_carbon_precursors.txt
