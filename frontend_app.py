@@ -740,7 +740,7 @@ with gem_tab:
 # TAB B: EXPERIMENTAL ANALYSIS
 # ════════════════════════════════════════════════
 with experimental_tab:
-    st.header("Experimental analysis")
+    st.header("Experimental analysis / Geometry-aware optimisation")
 
     exp_ranked = _read_csv_or_empty(EXPERIMENTAL_RESULTS_DIR / "predicted_ranked_scenarios.csv")
     exp_industrial = _read_csv_or_empty(
