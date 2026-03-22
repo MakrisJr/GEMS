@@ -1,0 +1,18 @@
+Top-10 region summary
+
+glucose: median=17.0000, range=[14.0000, 20.0000]
+ammonium: median=3.5000, range=[2.0000, 8.0000]
+phosphate: median=2.5000, range=[1.0000, 4.0000]
+sulfate: median=2.0000, range=[1.0000, 3.0000]
+temperature: median=32.0000, range=[28.0000, 33.0000]
+pH: median=6.3500, range=[5.8000, 6.5000]
+growth: median=2.3471, range=[1.9329, 2.7613]
+biomass_flux_mean: median=0.6114, range=[0.5148, 0.7127]
+biomass_yield: median=0.1381, range=[0.1381, 0.1381]
+byproduct_total: median=10.2159, range=[8.7827, 11.5425]
+overall_rank_score: median=0.4297, range=[0.3664, 0.5056]
+
+Mixing distribution:
+high: 5
+low: 3
+medium: 2

@@ -1,0 +1,30 @@
+[
+  {"medium":{"r2205":5,"r2202":1000,"r2203":1,"r2093":1.0,"r2095":2},"temperature":28,"pH":5.5,"mixing":"low","search_stage":"explore"},
+  {"medium":{"r2205":7,"r2202":1000,"r2203":2,"r2093":1.5,"r2095":3},"temperature":29,"pH":5.7,"mixing":"medium","search_stage":"explore"},
+  {"medium":{"r2205":10,"r2202":1000,"r2203":2,"r2093":2.0,"r2095":4},"temperature":30,"pH":6.0,"mixing":"medium","search_stage":"explore"},
+  {"medium":{"r2205":12,"r2202":1000,"r2203":3,"r2093":2.5,"r2095":6},"temperature":31,"pH":6.2,"mixing":"high","search_stage":"explore"},
+  {"medium":{"r2205":15,"r2202":1000,"r2203":4,"r2093":3.0,"r2095":8},"temperature":32,"pH":6.5,"mixing":"high","search_stage":"explore"},
+
+  {"medium":{"r2205":20,"r2202":1000,"r2203":1,"r2093":1.0,"r2095":2},"temperature":28,"pH":5.8,"mixing":"high","search_stage":"explore"},
+  {"medium":{"r2205":18,"r2202":1000,"r2203":2,"r2093":1.5,"r2095":3},"temperature":31,"pH":6.4,"mixing":"low","search_stage":"explore"},
+  {"medium":{"r2205":15,"r2202":1000,"r2203":4,"r2093":3.0,"r2095":2},"temperature":33,"pH":6.3,"mixing":"high","search_stage":"explore"},
+  {"medium":{"r2205":12,"r2202":1000,"r2203":3,"r2093":2.5,"r2095":6},"temperature":29,"pH":5.7,"mixing":"medium","search_stage":"explore"},
+  {"medium":{"r2205":10,"r2202":1000,"r2203":2,"r2093":2.0,"r2095":4},"temperature":30,"pH":6.0,"mixing":"medium","search_stage":"explore"},
+
+  {"medium":{"r2205":8,"r2202":1000,"r2203":1,"r2093":1.0,"r2095":8},"temperature":27,"pH":5.6,"mixing":"medium","search_stage":"explore"},
+  {"medium":{"r2205":5,"r2202":1000,"r2203":4,"r2093":3.0,"r2095":8},"temperature":30,"pH":6.2,"mixing":"low","search_stage":"explore"},
+  {"medium":{"r2205":20,"r2202":1000,"r2203":4,"r2093":3.0,"r2095":8},"temperature":32,"pH":6.5,"mixing":"high","search_stage":"explore"},
+  {"medium":{"r2205":7,"r2202":1000,"r2203":3,"r2093":2.5,"r2095":5},"temperature":28,"pH":5.7,"mixing":"low","search_stage":"explore"},
+  {"medium":{"r2205":18,"r2202":1000,"r2203":1,"r2093":1.0,"r2095":3},"temperature":31,"pH":6.4,"mixing":"low","search_stage":"explore"},
+
+  {"medium":{"r2205":12,"r2202":1000,"r2203":2,"r2093":1.5,"r2095":2},"temperature":29,"pH":5.8,"mixing":"medium","search_stage":"explore"},
+  {"medium":{"r2205":10,"r2202":1000,"r2203":4,"r2093":3.0,"r2095":6},"temperature":30,"pH":6.3,"mixing":"high","search_stage":"explore"},
+  {"medium":{"r2205":15,"r2202":1000,"r2203":2,"r2093":2.0,"r2095":4},"temperature":32,"pH":6.1,"mixing":"medium","search_stage":"explore"},
+  {"medium":{"r2205":8,"r2202":1000,"r2203":3,"r2093":2.5,"r2095":3},"temperature":27,"pH":5.6,"mixing":"medium","search_stage":"explore"},
+  {"medium":{"r2205":20,"r2202":1000,"r2203":3,"r2093":2.0,"r2095":5},"temperature":33,"pH":6.4,"mixing":"high","search_stage":"explore"},
+
+  {"medium":{"r2205":6,"r2202":1000,"r2203":1,"r2093":1.0,"r2095":2},"temperature":28,"pH":5.5,"mixing":"low","search_stage":"explore"},
+  {"medium":{"r2205":14,"r2202":1000,"r2203":3,"r2093":2.5,"r2095":7},"temperature":31,"pH":6.2,"mixing":"medium","search_stage":"explore"},
+  {"medium":{"r2205":16,"r2202":1000,"r2203":2,"r2093":1.5,"r2095":3},"temperature":32,"pH":6.3,"mixing":"low","search_stage":"explore"},
+  {"medium":{"r2205":9,"r2202":1000,"r2203":4,"r2093":3.0,"r2095":8},"temperature":29,"pH":6.0,"mixing":"high","search_stage":"explore"}
+]
