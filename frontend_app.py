@@ -73,7 +73,7 @@ if ML_BACKEND_ERROR is None and px is None:
         f"plotly is unavailable in this environment: {PLOTLY_IMPORT_ERROR}"
     )
 
-st.set_page_config(page_title="GEMS", page_icon="🍄", layout="wide")
+st.set_page_config(page_title="Fungal GEM Media Optimisation", layout="wide")
 
 DATA_MODELS_DIR = Path(__file__).resolve().parent / "data" / "models"
 
@@ -96,15 +96,18 @@ if "recs" not in st.session_state:
 
 # ── Sidebar ────────────────────────────────────
 with st.sidebar:
-    st.title("🍄 GEMS")
-    st.caption("Fungal Growth Optimizer")
+    st.title("Fungal GEM Media Optimisation")
+    st.caption("Draft-model media optimisation workflow")
     st.divider()
     meta = get_training_metadata()
     df = load_combined()
     stats = get_dataset_stats(df)
-    st.markdown(f"**Model:** {'✅ Trained' if meta else '❌ Not trained'}")
-    st.markdown(f"**Dataset:** {stats['total_rows']} rows ({stats['synthetic_rows']} synthetic, {stats['real_rows']} real)")
-    st.markdown(f"**Round:** {get_current_round()}")
+    st.markdown(f"**Model status:** {'Trained' if meta else 'Not trained'}")
+    st.markdown(
+        f"**Dataset:** {stats['total_rows']} rows "
+        f"({stats['synthetic_rows']} synthetic, {stats['real_rows']} experimental)"
+    )
+    st.markdown(f"**Training round:** {get_current_round()}")
 
 # ── Helper utilities ────────────────────────────
 
@@ -116,14 +119,14 @@ def _show_image_or_missing(path: Path, caption: str = "") -> None:
     if path.exists():
         st.image(str(path), caption=caption, use_container_width=True)
     else:
-        st.info(f"📂 Image not yet available: `{path.name}`")
+        st.info(f"Image not yet available: `{path.name}`")
 
 
 def _show_text_or_missing(path: Path) -> None:
     if path.exists():
         st.code(path.read_text(encoding="utf-8"), language="text")
     else:
-        st.info(f"📂 Text file not yet available: `{path.name}`")
+        st.info(f"Text file not yet available: `{path.name}`")
 
 
 def _show_csv_or_missing(path: Path, columns: list[str] | None = None) -> None:
@@ -138,7 +141,7 @@ def _show_csv_or_missing(path: Path, columns: list[str] | None = None) -> None:
         except Exception as e:
             st.error(f"Could not read CSV `{path.name}`: {e}")
     else:
-        st.info(f"📂 CSV not yet available: `{path.name}`")
+        st.info(f"Table not yet available: `{path.name}`")
 
 
 def _show_json_or_missing(path: Path) -> dict:
@@ -151,52 +154,55 @@ def _show_json_or_missing(path: Path) -> dict:
 
 
 # ── Top-level tabs ──────────────────────────────
-gem_tab, ml_tab = st.tabs(["🧫 GEM Pipeline", "🤖 ML Recommender"])
+gem_tab, ml_tab = st.tabs(["Model workflow", "ML recommender"])
 
 # ════════════════════════════════════════════════
 # TAB A: GEM PIPELINE
 # ════════════════════════════════════════════════
 with gem_tab:
-    st.header("GEM Pipeline — MVP Flow")
+    st.header("Fungal GEM media optimisation")
     st.caption(
-        "Pipeline order follows the official MVP entry points: "
-        "Build Draft Model → Theoretical Upper Bound → Preset Conditions → Custom Condition → Validation"
+        "Draft-model workflow for reconstruction, media benchmarking, and validation."
+    )
+    st.caption(
+        "Pipeline order: draft model build, theoretical upper bound, preset condition benchmark, "
+        "optional custom condition, and validation."
     )
 
     # ── Upload & Run section ────────────────────────
-    st.subheader("▲ Upload & Run")
+    st.subheader("Input")
 
-    uploaded_faa = st.file_uploader("Upload protein FASTA (.faa)", type=["faa", "fasta"])
+    uploaded_faa = st.file_uploader("Protein FASTA (.faa)", type=["faa", "fasta"])
 
     if uploaded_faa is not None:
-        st.markdown("**Analysis options** — select what to run:")
+        st.markdown("**Analysis settings**")
 
         col_opt1, col_opt2 = st.columns(2)
         with col_opt1:
             run_theoretical = st.checkbox(
-                "✅ Run Theoretical Upper Bound",
+                "Theoretical upper bound",
                 value=True,
                 disabled=True,
-                help="Part of the default MVP pipeline — always runs.",
+                help="Included in the default workflow.",
             )
             run_preset = st.checkbox(
-                "✅ Run Preset Conditions",
+                "Preset conditions",
                 value=True,
                 disabled=True,
-                help="Part of the default MVP pipeline — always runs.",
+                help="Included in the default workflow.",
             )
         with col_opt2:
             run_validation = st.checkbox(
-                "✅ Run Validation",
+                "Validation",
                 value=True,
                 disabled=True,
-                help="Part of the default MVP pipeline — always runs.",
+                help="Included in the default workflow.",
             )
             run_custom = st.checkbox(
-                "Run Custom Condition",
+                "Custom condition",
                 value=False,
                 key="run_custom_opt",
-                help="Optional — define a custom media condition to test.",
+                help="Optional. Evaluate one user-defined condition.",
             )
 
         # Custom condition inputs
@@ -204,7 +210,7 @@ with gem_tab:
         custom_preset_seed_run = "rich_debug_medium"
         custom_metabolite_ids_run = ""
         if run_custom:
-            st.markdown("**Custom Condition settings:**")
+            st.markdown("**Custom condition settings**")
             c1, c2 = st.columns(2)
             with c1:
                 custom_condition_name = st.text_input(
@@ -214,19 +220,19 @@ with gem_tab:
                 )
             with c2:
                 custom_preset_seed_run = st.selectbox(
-                    "Preset seed",
+                    "Starting preset",
                     list(CUSTOM_PRESET_OPTIONS),
                     format_func=lambda key: f"{CUSTOM_PRESET_OPTIONS[key]} ({key})",
                     key="run_custom_seed",
                 )
             custom_metabolite_ids_run = st.text_area(
-                "Metabolite IDs (comma-separated, optional)",
+                "Additional metabolite IDs (optional)",
                 placeholder="cpd00001, cpd00067",
                 key="run_custom_mets",
             )
 
         use_rast = st.checkbox(
-            "Use RAST annotations (recommended, slower)",
+            "Use RAST annotation (recommended, slower)",
             value=True,
             key="run_use_rast",
         )
@@ -235,14 +241,14 @@ with gem_tab:
             "Template",
             list(TEMPLATE_OPTIONS),
             index=0,
-            help="Choose the reconstruction template used to build the draft model.",
+            help="Select the reconstruction template for the draft model.",
             key="run_template_choice",
         )
         template_name, template_source = TEMPLATE_OPTIONS[template_label]
 
-        if st.button("▶ Run Pipeline", type="primary"):
+        if st.button("Run workflow", type="primary"):
             try:
-                with st.spinner("Running pipeline…"):
+                with st.spinner("Running workflow..."):
                     # 2. POST to /run with file as multipart upload
                     files = {"file": (uploaded_faa.name, uploaded_faa.getvalue(), "application/octet-stream")}
                     data = {
@@ -281,7 +287,7 @@ with gem_tab:
                         )
                         custom_resp.raise_for_status()
 
-                st.success(f"Pipeline complete! Model ID: {model_id}")
+                st.success(f"Workflow complete. Model ID: {model_id}")
                 st.session_state["gem_model_id"] = model_id
 
             except requests.exceptions.ConnectionError:
@@ -301,7 +307,7 @@ with gem_tab:
     st.divider()
 
     # ── Model selector ──────────────────────────────
-    st.subheader("📂 View Results for a Model")
+    st.subheader("Model information")
 
     available_models = sorted(
         [d.name for d in DATA_MODELS_DIR.iterdir() if d.is_dir() and d.name != ".gitkeep"]
@@ -314,13 +320,13 @@ with gem_tab:
         if session_model and session_model in available_models:
             default_idx = available_models.index(session_model)
         selected_model = st.selectbox(
-            "Select Model",
+            "Current model",
             available_models,
             index=default_idx,
             key="gem_model_select",
         )
     else:
-        st.warning("No models found in `data/models/`. Run the pipeline first.")
+        st.warning("No model outputs found in `data/models/`. Run the workflow first.")
         selected_model = None
 
     if selected_model:
@@ -335,22 +341,22 @@ with gem_tab:
             sub_validation,
             sub_advanced,
         ) = st.tabs([
-            "📋 Step 1 — Draft Model",
-            "📈 Step 2 — Theoretical Upper Bound",
-            "🧪 Step 3 — Preset Conditions",
-            "✏️ Step 4 — Custom Condition",
-            "✅ Step 5 — Validation",
-            "🔧 Full Pipeline Files",
+            "Step 1 - Draft model",
+            "Step 2 - Theoretical upper bound",
+            "Step 3 - Preset conditions",
+            "Step 4 - Custom condition",
+            "Step 5 - Validation",
+            "Pipeline files",
         ])
 
         # ── Sub-tab 1: Draft Model Overview ────────
         # Corresponds to: run_mvp_pipeline.py
         # Outputs: mvp_summary.json, mvp_mode_comparison.png
         with sub_overview:
-            st.subheader("Step 1 — Build & Export the Draft Model")
+            st.subheader("Step 1 - Build and export the draft model")
             st.caption(
-                "Run the MVP pipeline to load the protein FASTA, annotate with RAST, "
-                "build the draft metabolic model, gapfill, and export it. "
+                "Load the protein FASTA, annotate with RAST if selected, reconstruct the draft model, "
+                "attempt gapfilling, and export the result. "
                 "Command: `python scripts/run_mvp_pipeline.py --input protein.faa --model-id MODEL_ID --use-rast`"
             )
 
@@ -374,11 +380,11 @@ with gem_tab:
                     with cols[i % 4]:
                         st.metric(label=label, value=str(value))
             else:
-                st.info("📂 Summary not yet available (`mvp_summary.json`). Run the MVP pipeline first.")
+                st.info("Summary not yet available (`mvp_summary.json`). Run the workflow first.")
 
             st.divider()
-            st.subheader("Mode Comparison Plot")
-            st.caption("Visualises how the model performs across all three analysis modes (theoretical, preset, custom).")
+            st.subheader("Mode comparison")
+            st.caption("Comparison of theoretical, preset, and custom-condition outputs.")
             _show_image_or_missing(
                 mdir / "mvp_mode_comparison.png",
                 caption="MVP Mode Comparison",
@@ -391,9 +397,9 @@ with gem_tab:
         # Outputs: theoretical_upper_bound.png, theoretical_upper_bound.txt,
         #          theoretical_upper_bound_conditions.csv
         with sub_theoretical:
-            st.subheader("Step 2 — Theoretical Upper Bound")
+            st.subheader("Step 2 - Theoretical upper bound")
             st.caption(
-                "Best-case benchmark — not a wet-lab medium recommendation. "
+                "Best-case benchmark, not a wet-lab medium recommendation. "
                 "Temporary biomass-support boundaries are added around the selected biomass-like reaction "
                 "to estimate the maximum possible draft-model flux. "
                 "Command: `python scripts/analyze_mvp.py --model-dir data/models/MODEL_ID --mode theoretical`"
@@ -401,7 +407,7 @@ with gem_tab:
 
             _show_image_or_missing(
                 mdir / "theoretical_upper_bound.png",
-                caption="Theoretical Upper Bound Plot",
+                caption="Theoretical upper bound",
             )
 
             theo_json = _show_json_or_missing(mdir / "theoretical_upper_bound.json")
@@ -419,13 +425,13 @@ with gem_tab:
                 for i, (label, value) in enumerate(metrics):
                     s_cols[i % 3].metric(label=label, value=str(value))
             else:
-                st.info("📂 JSON summary not yet available: `theoretical_upper_bound.json`")
+                st.info("Summary not yet available: `theoretical_upper_bound.json`")
 
-            with st.expander("Text Summary"):
+            with st.expander("Text summary"):
                 _show_text_or_missing(mdir / "theoretical_upper_bound.txt")
 
-            st.subheader("Boundary Conditions Table")
-            st.caption("Temporary biomass-support boundaries used in the optimized theoretical run.")
+            st.subheader("Boundary condition table")
+            st.caption("Temporary biomass-support boundaries used in the optimised theoretical run.")
             _show_csv_or_missing(
                 mdir / "theoretical_upper_bound_conditions.csv",
                 columns=["metabolite_name", "metabolite_id", "boundary_id", "flux", "abs_flux"],
@@ -437,19 +443,19 @@ with gem_tab:
         # Meaning: comparison library for the draft model
         # Outputs: preset_conditions.png, preset_conditions.csv, preset_conditions.txt
         with sub_preset:
-            st.subheader("Step 3 — Preset Conditions")
+            st.subheader("Step 3 - Preset conditions")
             st.caption(
-                "Comparison library for the draft model — tests a small model-specific set of "
+                "Comparison library for the draft model. Tests a small model-specific set of "
                 "biomass-support conditions derived from the current biomass reaction. "
                 "Command: `python scripts/analyze_mvp.py --model-dir data/models/MODEL_ID --mode preset`"
             )
 
             _show_image_or_missing(
                 mdir / "preset_conditions.png",
-                caption="Preset Conditions Comparison",
+                caption="Preset condition comparison",
             )
 
-            st.subheader("Preset Conditions Table")
+            st.subheader("Preset condition table")
             _show_csv_or_missing(
                 mdir / "preset_conditions.csv",
                 columns=[
@@ -462,7 +468,7 @@ with gem_tab:
                 ],
             )
 
-            st.subheader("Preset Conditions Summary")
+            st.subheader("Preset condition summary")
             _show_text_or_missing(mdir / "preset_conditions.txt")
 
         # ── Sub-tab 4: Custom Condition ─────────────
@@ -472,9 +478,9 @@ with gem_tab:
         # Outputs: custom_condition_<name>.png, custom_condition_<name>.json,
         #          custom_condition_<name>.txt
         with sub_custom:
-            st.subheader("Step 4 — Custom Condition")
+            st.subheader("Step 4 - Custom condition")
             st.caption(
-                "User-defined comparison condition — start from a preset medium and modify it. "
+                "User-defined comparison condition. Start from a preset and optionally modify it. "
                 "Command: `python scripts/analyze_mvp.py --model-dir data/models/MODEL_ID "
                 "--mode custom --from-preset rich_debug_medium --condition-name CONDITION_NAME`"
             )
@@ -485,7 +491,7 @@ with gem_tab:
                 key="custom_cond_name",
             )
             preset_seed = st.selectbox(
-                "Preset seed",
+                "Starting preset",
                 list(CUSTOM_PRESET_OPTIONS),
                 format_func=lambda key: f"{CUSTOM_PRESET_OPTIONS[key]} ({key})",
                 key="custom_preset_seed",
@@ -502,11 +508,11 @@ with gem_tab:
             custom_json = mdir / f"custom_condition_{safe_name}.json"
             custom_txt = mdir / f"custom_condition_{safe_name}.txt"
 
-            _show_image_or_missing(custom_png, caption=f"Custom Condition: {safe_name}")
+            _show_image_or_missing(custom_png, caption=f"Custom condition: {safe_name}")
 
             custom_data = _show_json_or_missing(custom_json)
             if custom_data:
-                st.subheader("Custom Condition Summary")
+                st.subheader("Custom condition summary")
                 summary_fields = [
                     ("Condition", custom_data.get("display_name", custom_data.get("condition", "—"))),
                     ("Status", custom_data.get("status", "—")),
@@ -525,7 +531,7 @@ with gem_tab:
                         hide_index=True,
                     )
             else:
-                st.info(f"📂 Custom condition output not yet available for `{safe_name}`.")
+                st.info(f"Custom-condition output not yet available for `{safe_name}`.")
 
             _show_text_or_missing(custom_txt)
 
@@ -539,9 +545,9 @@ with gem_tab:
         #          theoretical_upper_bound_exchange_fva.csv,
         #          theoretical_upper_bound_gene_essentiality.csv
         with sub_validation:
-            st.subheader("Step 5 — Validation")
+            st.subheader("Step 5 - Validation")
             st.caption(
-                "Draft-model quality checks — confirms FBA solvability, identifies dead-end metabolites, "
+                "Draft-model quality checks. Confirms FBA solvability, identifies dead-end metabolites, "
                 "runs exchange FVA and gene essentiality analysis. "
                 "Command: `python scripts/validate_mvp.py --model-dir data/models/MODEL_ID` "
                 "and `python scripts/validate_mvp.py --model-dir data/models/MODEL_ID "
@@ -550,7 +556,7 @@ with gem_tab:
 
             _show_image_or_missing(
                 mdir / "theoretical_upper_bound_validation_dashboard.png",
-                caption="Validation Dashboard",
+                caption="Validation dashboard",
             )
 
             val_txt = mdir / "theoretical_upper_bound_validation_summary.txt"
@@ -578,13 +584,13 @@ with gem_tab:
                 for i, (label, value) in enumerate(val_fields):
                     v_cols[i % 4].metric(label=label, value=str(value))
             else:
-                st.info("📂 Validation JSON not yet available.")
+                st.info("Validation summary not yet available.")
 
-            st.subheader("Validation Text Summary")
+            st.subheader("Validation summary")
             _show_text_or_missing(val_txt)
 
             st.divider()
-            st.subheader("Detailed Validation Tables")
+            st.subheader("Detailed validation tables")
 
             dead_end_path = mdir / "theoretical_upper_bound_dead_end_metabolites.csv"
             fva_path = mdir / "theoretical_upper_bound_exchange_fva.csv"
@@ -603,10 +609,10 @@ with gem_tab:
         # Shows all 12 pipeline steps in order, using the exact filenames from
         # the "Important output files" section of installation.txt
         with sub_advanced:
-            st.subheader("Full Pipeline Intermediate Files")
+            st.subheader("Pipeline files")
             st.caption(
-                "Intermediate outputs from all 12 pipeline steps, shown in execution order "
-                "as described in installation.txt. Useful for troubleshooting and deeper analysis."
+                "Intermediate outputs from the full workflow, shown in execution order. "
+                "Useful for troubleshooting and detailed inspection."
             )
 
             # Steps in pipeline order (matches installation.txt steps 1–12)
@@ -672,7 +678,7 @@ with gem_tab:
 
                 if step_files:
                     found_any = True
-                    with st.expander(f"🔢 Step {step_num} — {step_label}"):
+                    with st.expander(f"Step {step_num} - {step_label}"):
                         for candidate, fname, ftype in step_files:
                             st.markdown(f"**`{Path(fname).name}`**")
                             if ftype == "csv":
@@ -684,7 +690,7 @@ with gem_tab:
 
             if not found_any:
                 st.info(
-                    "No intermediate pipeline files found yet for this model. "
+                    "No intermediate workflow files found yet for this model. "
                     "Run the full pipeline (steps 1–12) to generate them."
                 )
 
@@ -693,7 +699,7 @@ with gem_tab:
             if mdir.exists():
                 all_files = sorted(mdir.iterdir())
                 for f in all_files:
-                    st.text(f"  {f.name}  ({f.stat().st_size:,} bytes)" if f.is_file() else f"  📁 {f.name}/")
+                    st.text(f"  {f.name}  ({f.stat().st_size:,} bytes)" if f.is_file() else f"  {f.name}/")
             else:
                 st.info("Model directory does not exist yet.")
 
@@ -712,29 +718,29 @@ with ml_tab:
             "training and recommendation features."
         )
     else:
-        with st.expander("ℹ️ How it works", expanded=False):
+        with st.expander("How it works", expanded=False):
             st.markdown("""
-**ℹ️ How the ML Recommender works**
+**How the ML recommender works**
 
-1. **Train** — Learns from historical fungal growth experiments (carbon source, nitrogen, pH, temperature, etc.) to predict whether a given media condition supports growth.
+1. **Train** — Learns from historical fungal growth experiments to predict whether a given media condition supports growth.
 
-2. **Recommend** — Given a new condition, ranks the most similar successful media conditions from the training data and suggests the top candidates.
+2. **Recommend** — Ranks candidate media conditions based on similarity to successful conditions in the training data.
 
-3. **Retrain** — Upload new lab results as a CSV to continuously improve the model.
+3. **Retrain** — Incorporates new laboratory results to update the model.
 
 ---
 The underlying model uses a **Random Forest classifier** trained on tabular growth data.
 Features include nutrient composition, environmental parameters, and strain metadata.
 """)
 
-        ml_train, ml_recs, ml_upload = st.tabs(["🤖 Train", "🔬 Recommendations", "🔄 Upload & Retrain"])
+        ml_train, ml_recs, ml_upload = st.tabs(["Train", "Recommendations", "Upload and retrain"])
 
         # ── ML sub-tab 1: TRAIN ───────────────────────
         with ml_train:
-            st.header("Train ML Models")
+            st.header("Train models")
 
-            if st.button("Train Model", type="primary", use_container_width=True):
-                with st.spinner("Training… (1–2 min)"):
+            if st.button("Train model", type="primary", use_container_width=True):
+                with st.spinner("Training... (1–2 min)"):
                     try:
                         meta = train_all()
                         st.success("Training complete!")
@@ -756,7 +762,7 @@ Features include nutrient composition, environmental parameters, and strain meta
                     {"Target": t, "Best Model": info["best_model_type"], "CV R²": round(info["best_cv_r2"], 3)}
                     for t, info in meta["targets"].items()
                 ]
-                st.subheader("Best Model per Target")
+                st.subheader("Best model per target")
                 st.dataframe(pd.DataFrame(best_rows), use_container_width=True, hide_index=True)
 
                 fig = px.bar(
@@ -765,30 +771,30 @@ Features include nutrient composition, environmental parameters, and strain meta
                     y="CV R²",
                     color="Model",
                     barmode="group",
-                    title="Cross-Validation R² by Target & Model",
+                    title="Cross-validation R² by target and model",
                     color_discrete_sequence=px.colors.qualitative.Set2,
                 )
                 fig.update_layout(yaxis_range=[0, 1], height=350, margin=dict(t=40, b=10))
                 st.plotly_chart(fig, use_container_width=True)
             else:
-                st.info("No model trained yet. Click 'Train Model' to begin.")
+                st.info("No model has been trained yet. Select `Train model` to begin.")
 
         # ── ML sub-tab 2: RECOMMENDATIONS ─────────────
         with ml_recs:
-            st.header("Get Recommendations")
+            st.header("Recommendations")
 
             meta = get_training_metadata()
             if not meta:
-                st.warning("Please train the model first (Train tab).")
+                st.warning("Train the model first in the `Train` tab.")
             else:
                 col1, col2 = st.columns([2, 1])
                 with col1:
                     strain = st.selectbox("Strain", STRAINS)
                 with col2:
-                    top_n = st.slider("Top N", 3, 10, 5)
+                    top_n = st.slider("Number of recommendations", 3, 10, 5)
 
-                if st.button("Get Recommendations", type="primary"):
-                    with st.spinner("Evaluating 2,000 candidate conditions…"):
+                if st.button("Generate recommendations", type="primary"):
+                    with st.spinner("Evaluating 2,000 candidate conditions..."):
                         try:
                             recs = recommend(strain, top_n=top_n)
                             st.session_state["recs"][strain] = recs
@@ -834,7 +840,7 @@ Features include nutrient composition, environmental parameters, and strain meta
                         excel_bytes = recommendations_to_excel(recs)
                         fname = f"lab_sheet_{strain.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.xlsx"
                         st.download_button(
-                            "📥 Download Lab Sheet (Excel)",
+                            "Download lab sheet (Excel)",
                             data=excel_bytes,
                             file_name=fname,
                             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -844,18 +850,18 @@ Features include nutrient composition, environmental parameters, and strain meta
 
         # ── ML sub-tab 3: UPLOAD & RETRAIN ────────────
         with ml_upload:
-            st.header("Upload Results & Retrain")
+            st.header("Upload results and retrain")
 
-            st.subheader("1 — Upload Lab Results")
-            uploaded = st.file_uploader("Upload filled lab results CSV", type=["csv"])
+            st.subheader("1 - Upload laboratory results")
+            uploaded = st.file_uploader("Laboratory results CSV", type=["csv"])
 
             if uploaded:
                 try:
                     upload_df = pd.read_csv(uploaded)
-                    st.write(f"Loaded {len(upload_df)} rows, {len(upload_df.columns)} columns")
+                    st.write(f"Loaded {len(upload_df)} rows and {len(upload_df.columns)} columns")
                     st.dataframe(upload_df.head(), use_container_width=True)
 
-                    if st.button("✅ Validate & Ingest", type="primary"):
+                    if st.button("Validate and ingest", type="primary"):
                         current_round = get_current_round()
                         ok, msg, updated = ingest_results(upload_df, current_round + 1)
                         if ok:
@@ -867,16 +873,16 @@ Features include nutrient composition, environmental parameters, and strain meta
                 except Exception as e:
                     st.error(f"Could not read file: {e}")
 
-            st.subheader("2 — Retrain Model")
+            st.subheader("2 - Retrain model")
             df2 = load_combined()
             stats2 = get_dataset_stats(df2)
             st.caption(
-                f"Dataset: {stats2['total_rows']} rows — {stats2['synthetic_rows']} synthetic, {stats2['real_rows']} real"
+                f"Dataset: {stats2['total_rows']} rows — {stats2['synthetic_rows']} synthetic, {stats2['real_rows']} experimental"
             )
 
-            desc = st.text_input("Round description (optional)", placeholder="e.g. After first lab batch")
-            if st.button("🔄 Retrain with All Data", type="primary"):
-                with st.spinner("Retraining…"):
+            desc = st.text_input("Round description (optional)", placeholder="e.g. After first laboratory batch")
+            if st.button("Retrain with all data", type="primary"):
+                with st.spinner("Retraining..."):
                     try:
                         new_meta = retrain(description=desc)
                         st.success(f"Retrain complete! Round {get_current_round()}")
@@ -886,5 +892,5 @@ Features include nutrient composition, environmental parameters, and strain meta
 
             history = compare_rounds()
             if history:
-                st.subheader("Training History")
+                st.subheader("Training history")
                 st.dataframe(pd.DataFrame(history), use_container_width=True, hide_index=True)
