@@ -1,6 +1,6 @@
-# 🍄 GEMS — Genomic & Experimental Metabolic Suite
+# GEMS — Genomic & Experimental Metabolic Suite
 
-GEMS is an end-to-end platform for **fungal metabolic model reconstruction**, **ML-driven growth-condition optimisation**, and **geometry-aware fermentation design using polytope sampling**. It combines a ModelSEED-based genome-scale model (GEM) pipeline, a trained multi-target regressor, and a convex-geometry analysis layer for four industrial fungal strains.
+GEMS is an end-to-end platform for **fungal metabolic model reconstruction**, **ML-driven growth-condition optimisation**, and **geometry-aware optimisation design using polytope sampling**. It combines a ModelSEED-based genome-scale model (GEM) pipeline, a trained multi-target regressor, and a convex-geometry analysis layer for four industrial fungal strains.
 
 ---
 
@@ -28,8 +28,8 @@ GEMS has three integrated components:
 | Component | Purpose |
 |-----------|---------|
 | **GEM Pipeline** | Protein FASTA → draft metabolic model → gapfill → FBA analysis → validation |
-| **ML Recommender** | Historical growth data → train Random Forest / XGBoost / LightGBM → recommend optimal media conditions |
-| **Experimental / Polytope Analysis** | Fungal GEM + scenario generator → polytope sampling → geometry features → surrogate ML → industrial ranking |
+| **ML Recommender** | Historical growth data (online learning) → train Random Forest / XGBoost / LightGBM → recommend optimal media conditions |
+| **Experimental / Geometry Aware** | Fungal GEM + scenario generator → polytope sampling → geometry features → surrogate ML → industrial ranking |
 
 All three components are accessible through a single **Streamlit UI** and a **FastAPI backend**.
 
@@ -404,20 +404,23 @@ scenarios_fungi.json          — fermentation scenario definitions
 ```bash
 cd GEMS/Experimental
 
-# 1. Build the dataset (requires PolyRound + PolytopeSampler)
+# 1. generate the Scenarios
+python scenario_generator_adaptive.py
+
+# 2. Build the dataset (requires PolyRound + PolytopeSampler)
 python dataset_builder.py
 
-# 2. Train the surrogate model
+# 3. Train the surrogate model
 python train_model.py
 
-# 3. Rank scenarios by overall score
+# 4. Rank scenarios by overall score
 python rank_scenarios.py
 
-# 4. Add industrial scoring layer
+# 5. Add industrial scoring layer
 python postprocess_scores.py
 python rank_scenarios_industrial.py
 
-# 5. Analyse and visualise
+# 6. Analyse and visualise
 python feature_importance.py
 python top_region_summary.py
 python plot_pareto.py
@@ -520,10 +523,4 @@ Run a single custom-condition analysis on an existing model.
 ---
 
 ## Supported Fungal Strains
-
-| Strain | Type | Used in |
-|--------|------|---------|
-| *Neurospora crassa* OR74A | Ascomycete | ML Recommender |
-| *Rhizopus microsporus* var. *microsporus* ATCC 52814 | Zygomycete | ML Recommender |
-| *Aspergillus niger* ATCC 13496 | Ascomycete | ML Recommender |
-| *Aspergillus oryzae* RIB40 | Ascomycete | ML Recommender + Experimental Analysis |
+Works with any SBML file and any protein FASTA file.
