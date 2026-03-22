@@ -14,7 +14,7 @@ from modelseedpy.core.mstemplate import MSTemplateBuilder
 from modelseedpy.helpers import get_template
 
 
-MODELSEED_DATABASE_ROOT = PROJECT_ROOT.parent / "ModelSEEDDatabase" / "Templates"
+MODELSEED_DATABASE_ROOT = PROJECT_ROOT / "ModelSEEDDatabase" / "Templates"
 
 _TEMPLATE_ALIASES = {
     "core": "template_core",
