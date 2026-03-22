@@ -1,0 +1,262 @@
+[
+  {
+    "medium": {
+      "EX_glc__D_e": 2.4102950237330343,
+      "EX_nh4_e": 7.041316527873803,
+      "EX_pi_e": 4.179966512470051,
+      "EX_so4_e": 3.3825820055822473,
+      "EX_o2_e": 1000.0
+    },
+    "temperature": 33.47,
+    "pH": 6.7,
+    "mixing": "medium",
+    "search_stage": "explore"
+  },
+  {
+    "medium": {
+      "EX_glc__D_e": 10.848719379001306,
+      "EX_nh4_e": 5.97391122738737,
+      "EX_pi_e": 1.0741804928131489,
+      "EX_so4_e": 4.470541469233014,
+      "EX_o2_e": 1000.0
+    },
+    "temperature": 25.88,
+    "pH": 5.43,
+    "mixing": "medium",
+    "search_stage": "explore"
+  },
+  {
+    "medium": {
+      "EX_glc__D_e": 13.09242601148314,
+      "EX_nh4_e": 4.535898024226544,
+      "EX_pi_e": 3.3220552204713636,
+      "EX_so4_e": 3.739437080584788,
+      "EX_o2_e": 1000.0
+    },
+    "temperature": 25.09,
+    "pH": 5.19,
+    "mixing": "high",
+    "search_stage": "explore"
+  },
+  {
+    "medium": {
+      "EX_glc__D_e": 8.363798098414911,
+      "EX_nh4_e": 9.486313076764779,
+      "EX_pi_e": 3.7127314813070584,
+      "EX_so4_e": 1.8199104204277434,
+      "EX_o2_e": 1000.0
+    },
+    "temperature": 29.22,
+    "pH": 4.97,
+    "mixing": "medium",
+    "search_stage": "explore"
+  },
+  {
+    "medium": {
+      "EX_glc__D_e": 5.7613623526319255,
+      "EX_nh4_e": 7.359153464506904,
+      "EX_pi_e": 2.7838272849081815,
+      "EX_so4_e": 2.0424143711309157,
+      "EX_o2_e": 1000.0
+    },
+    "temperature": 26.44,
+    "pH": 4.87,
+    "mixing": "medium",
+    "search_stage": "explore"
+  },
+  {
+    "medium": {
+      "EX_glc__D_e": 20.708440098572098,
+      "EX_nh4_e": 10.504330434741298,
+      "EX_pi_e": 6.281025767679323,
+      "EX_so4_e": 2.707646199914766,
+      "EX_o2_e": 1000.0
+    },
+    "temperature": 27.68,
+    "pH": 5.02,
+    "mixing": "low",
+    "search_stage": "explore"
+  },
+  {
+    "medium": {
+      "EX_glc__D_e": 16.834405983245226,
+      "EX_nh4_e": 9.784164438478168,
+      "EX_pi_e": 4.219127412246603,
+      "EX_so4_e": 5.876878207375607,
+      "EX_o2_e": 1000.0
+    },
+    "temperature": 26.07,
+    "pH": 4.86,
+    "mixing": "low",
+    "search_stage": "explore"
+  },
+  {
+    "medium": {
+      "EX_glc__D_e": 7.455547749984228,
+      "EX_nh4_e": 8.503237155212917,
+      "EX_pi_e": 1.3571819982802937,
+      "EX_so4_e": 1.0041800963494136,
+      "EX_o2_e": 1000.0
+    },
+    "temperature": 28.41,
+    "pH": 4.61,
+    "mixing": "high",
+    "search_stage": "explore"
+  },
+  {
+    "medium": {
+      "EX_glc__D_e": 6.229137257784274,
+      "EX_nh4_e": 7.576213225226883,
+      "EX_pi_e": 6.566205348428497,
+      "EX_so4_e": 2.6908398709642944,
+      "EX_o2_e": 1000.0
+    },
+    "temperature": 27.19,
+    "pH": 5.5,
+    "mixing": "medium",
+    "search_stage": "explore"
+  },
+  {
+    "medium": {
+      "EX_glc__D_e": 8.505103131379485,
+      "EX_nh4_e": 9.325355258877265,
+      "EX_pi_e": 7.526178824396194,
+      "EX_so4_e": 0.9339660576967099,
+      "EX_o2_e": 1000.0
+    },
+    "temperature": 25.06,
+    "pH": 6.88,
+    "mixing": "low",
+    "search_stage": "explore"
+  },
+  {
+    "medium": {
+      "EX_glc__D_e": 7.351729738432393,
+      "EX_nh4_e": 11.516794794865175,
+      "EX_pi_e": 4.108186577317916,
+      "EX_so4_e": 2.267207318521719,
+      "EX_o2_e": 1000.0
+    },
+    "temperature": 28.49,
+    "pH": 5.71,
+    "mixing": "medium",
+    "search_stage": "explore"
+  },
+  {
+    "medium": {
+      "EX_glc__D_e": 9.936243217902742,
+      "EX_nh4_e": 8.271420640889039,
+      "EX_pi_e": 4.477915160334338,
+      "EX_so4_e": 2.983735077898119,
+      "EX_o2_e": 1000.0
+    },
+    "temperature": 28.94,
+    "pH": 6.95,
+    "mixing": "low",
+    "search_stage": "explore"
+  },
+  {
+    "medium": {
+      "EX_glc__D_e": 14.726943399156948,
+      "EX_nh4_e": 9.72872367041497,
+      "EX_pi_e": 4.555108455337373,
+      "EX_so4_e": 5.324770001133195,
+      "EX_o2_e": 1000.0
+    },
+    "temperature": 28.37,
+    "pH": 6.0,
+    "mixing": "low",
+    "search_stage": "explore"
+  },
+  {
+    "medium": {
+      "EX_glc__D_e": 14.04543557316667,
+      "EX_nh4_e": 10.954539699140726,
+      "EX_pi_e": 3.441078902961877,
+      "EX_so4_e": 2.66938572461582,
+      "EX_o2_e": 1000.0
+    },
+    "temperature": 30.17,
+    "pH": 6.91,
+    "mixing": "medium",
+    "search_stage": "explore"
+  },
+  {
+    "medium": {
+      "EX_glc__D_e": 11.19707337668513,
+      "EX_nh4_e": 7.489282198012313,
+      "EX_pi_e": 6.2436425187827735,
+      "EX_so4_e": 0.61996407393675,
+      "EX_o2_e": 1000.0
+    },
+    "temperature": 33.46,
+    "pH": 6.3,
+    "mixing": "high",
+    "search_stage": "explore"
+  },
+  {
+    "medium": {
+      "EX_glc__D_e": 19.606414143621365,
+      "EX_nh4_e": 4.889637034728798,
+      "EX_pi_e": 2.9378443940397894,
+      "EX_so4_e": 0.6348804581476568,
+      "EX_o2_e": 1000.0
+    },
+    "temperature": 30.9,
+    "pH": 5.59,
+    "mixing": "high",
+    "search_stage": "explore"
+  },
+  {
+    "medium": {
+      "EX_glc__D_e": 4.424273454983194,
+      "EX_nh4_e": 2.86358014232896,
+      "EX_pi_e": 5.023954736870188,
+      "EX_so4_e": 5.557757545607873,
+      "EX_o2_e": 1000.0
+    },
+    "temperature": 32.61,
+    "pH": 4.84,
+    "mixing": "medium",
+    "search_stage": "explore"
+  },
+  {
+    "medium": {
+      "EX_glc__D_e": 17.20016534321331,
+      "EX_nh4_e": 9.63677582799768,
+      "EX_pi_e": 4.344928563710701,
+      "EX_so4_e": 2.0171439098109736,
+      "EX_o2_e": 1000.0
+    },
+    "temperature": 25.88,
+    "pH": 6.56,
+    "mixing": "low",
+    "search_stage": "explore"
+  },
+  {
+    "medium": {
+      "EX_glc__D_e": 23.664064744116313,
+      "EX_nh4_e": 9.360024442169877,
+      "EX_pi_e": 6.709847080525882,
+      "EX_so4_e": 3.645595676844806,
+      "EX_o2_e": 1000.0
+    },
+    "temperature": 31.56,
+    "pH": 5.54,
+    "mixing": "low",
+    "search_stage": "explore"
+  },
+  {
+    "medium": {
+      "EX_glc__D_e": 13.19899413886491,
+      "EX_nh4_e": 5.105500916417897,
+      "EX_pi_e": 6.546399365712487,
+      "EX_so4_e": 5.525546743355124,
+      "EX_o2_e": 1000.0
+    },
+    "temperature": 26.66,
+    "pH": 5.15,
+    "mixing": "high",
+    "search_stage": "explore"
+  }
+]

@@ -80,6 +80,8 @@ st.set_page_config(page_title="Fungal GEM Media Optimisation", layout="wide")
 
 DATA_MODELS_DIR = Path(__file__).resolve().parent / "data" / "models"
 PIPELINE_MAP_PATH = Path(__file__).resolve().parent / "docs" / "pipeline_metro_map_nf_metro.svg"
+EXPERIMENTAL_DIR = Path(__file__).resolve().parent / "Experimental"
+EXPERIMENTAL_RESULTS_DIR = EXPERIMENTAL_DIR / "Results A_oryzae"
 
 TEMPLATE_OPTIONS = {
     "Core Template (built-in)": ("template_core", "builtin"),
@@ -165,8 +167,20 @@ def _show_json_or_missing(path: Path) -> dict:
     return {}
 
 
+def _read_csv_or_empty(path: Path) -> pd.DataFrame:
+    if not path.exists():
+        return pd.DataFrame()
+    try:
+        return pd.read_csv(path)
+    except Exception as e:
+        st.error(f"Could not read CSV `{path.name}`: {e}")
+        return pd.DataFrame()
+
+
 # ── Top-level tabs ──────────────────────────────
-gem_tab, ml_tab = st.tabs(["Model workflow", "ML recommender"])
+gem_tab, experimental_tab, ml_tab = st.tabs(
+    ["Model workflow", "Experimental analysis", "ML recommender"]
+)
 
 # ════════════════════════════════════════════════
 # TAB A: GEM PIPELINE
@@ -723,7 +737,159 @@ with gem_tab:
 
 
 # ════════════════════════════════════════════════
-# TAB B: ML RECOMMENDER  (all existing ML functionality preserved)
+# TAB B: EXPERIMENTAL ANALYSIS
+# ════════════════════════════════════════════════
+with experimental_tab:
+    st.header("Experimental analysis")
+
+    exp_ranked = _read_csv_or_empty(EXPERIMENTAL_RESULTS_DIR / "predicted_ranked_scenarios.csv")
+    exp_industrial = _read_csv_or_empty(
+        EXPERIMENTAL_RESULTS_DIR / "predicted_ranked_scenarios_industrial.csv"
+    )
+    exp_importance = _read_csv_or_empty(EXPERIMENTAL_RESULTS_DIR / "feature_importances.csv")
+
+    metric_cols = st.columns(4)
+    overall_best = exp_ranked.iloc[0] if not exp_ranked.empty else None
+    industrial_best = exp_industrial.iloc[0] if not exp_industrial.empty else None
+    top_feature = exp_importance.iloc[0] if not exp_importance.empty else None
+
+    metric_cols[0].metric(
+        "Reference model",
+        "A. oryzae",
+    )
+    metric_cols[1].metric(
+        "Scenarios ranked",
+        str(len(exp_ranked)) if not exp_ranked.empty else "—",
+    )
+    metric_cols[2].metric(
+        "Best overall score",
+        (
+            f"{overall_best['overall_rank_score']:.4f}"
+            if overall_best is not None and "overall_rank_score" in overall_best
+            else "—"
+        ),
+    )
+    metric_cols[3].metric(
+        "Best industrial score",
+        (
+            f"{industrial_best['industrial_score']:.4f}"
+            if industrial_best is not None and "industrial_score" in industrial_best
+            else "—"
+        ),
+    )
+
+    summary_cols = st.columns(3)
+    summary_cols[0].metric(
+        "Top overall scenario",
+        (
+            f"Scenario {int(overall_best['scenario'])}"
+            if overall_best is not None and "scenario" in overall_best
+            else "—"
+        ),
+    )
+    summary_cols[1].metric(
+        "Top industrial scenario",
+        (
+            f"Scenario {int(industrial_best['scenario'])}"
+            if industrial_best is not None and "scenario" in industrial_best
+            else "—"
+        ),
+    )
+    summary_cols[2].metric(
+        "Top feature",
+        (
+            str(top_feature["feature"]).replace("num__", "")
+            if top_feature is not None and "feature" in top_feature
+            else "—"
+        ),
+    )
+
+    st.subheader("Regional summary")
+    _show_text_or_missing(EXPERIMENTAL_RESULTS_DIR / "top_region_summary.txt")
+
+    st.subheader("Tradeoff plots")
+    plot_col1, plot_col2 = st.columns(2)
+    with plot_col1:
+        _show_image_or_missing(
+            EXPERIMENTAL_RESULTS_DIR / "pareto_growth_vs_byproduct.png",
+            caption="Growth vs byproduct Pareto tradeoff",
+        )
+    with plot_col2:
+        _show_image_or_missing(
+            EXPERIMENTAL_RESULTS_DIR / "plot_industrial_tradeoff.png",
+            caption="Industrial score tradeoff",
+        )
+
+    st.subheader("Ranked scenarios")
+    st.caption("Top candidate conditions ranked by the experimental surrogate model.")
+    _show_csv_or_missing(
+        EXPERIMENTAL_RESULTS_DIR / "predicted_ranked_scenarios.csv",
+        columns=[
+            "scenario",
+            "search_stage",
+            "glucose",
+            "ammonium",
+            "phosphate",
+            "sulfate",
+            "temperature",
+            "pH",
+            "mixing",
+            "growth",
+            "biomass_flux_mean",
+            "byproduct_total",
+            "overall_rank_score",
+        ],
+    )
+
+    st.subheader("Industrial ranking")
+    st.caption("Top scenarios after adding industrial scoring terms.")
+    _show_csv_or_missing(
+        EXPERIMENTAL_RESULTS_DIR / "predicted_ranked_scenarios_industrial.csv",
+        columns=[
+            "scenario",
+            "search_stage",
+            "glucose",
+            "ammonium",
+            "phosphate",
+            "sulfate",
+            "temperature",
+            "pH",
+            "mixing",
+            "growth",
+            "economic_score",
+            "morphology_score",
+            "meatiness_score",
+            "industrial_score",
+        ],
+    )
+
+    st.subheader("Feature importance")
+    st.caption("Most influential variables in the experimental surrogate model.")
+    _show_csv_or_missing(
+        EXPERIMENTAL_RESULTS_DIR / "feature_importances.csv",
+        columns=["feature", "importance"],
+    )
+
+    with st.expander("Processed dataset preview"):
+        _show_csv_or_missing(
+            EXPERIMENTAL_RESULTS_DIR / "dataset_postprocessed.csv",
+            columns=[
+                "scenario",
+                "search_stage",
+                "growth",
+                "fva_range",
+                "log_volume",
+                "anisotropy_log",
+                "biomass_flux_mean",
+                "byproduct_total",
+                "overall_rank_score",
+                "industrial_score",
+            ],
+        )
+
+
+# ════════════════════════════════════════════════
+# TAB C: ML RECOMMENDER  (all existing ML functionality preserved)
 # ════════════════════════════════════════════════
 with ml_tab:
     if ML_BACKEND_ERROR is not None:
