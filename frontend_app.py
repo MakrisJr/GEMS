@@ -79,6 +79,7 @@ if ML_BACKEND_ERROR is None and px is None:
 st.set_page_config(page_title="Fungal GEM Media Optimisation", layout="wide")
 
 DATA_MODELS_DIR = Path(__file__).resolve().parent / "data" / "models"
+PIPELINE_MAP_PATH = Path(__file__).resolve().parent / "docs" / "pipeline_metro_map_nf_metro.svg"
 
 TEMPLATE_OPTIONS = {
     "Core Template (built-in)": ("template_core", "builtin"),
@@ -126,10 +127,11 @@ def _model_dir(model_id: str) -> Path:
 
 
 def _show_image_or_missing(path: Path, caption: str = "") -> None:
-    if path.exists():
-        st.image(str(path), caption=caption, use_container_width=True)
-    else:
+    if not path.exists():
         st.info(f"Image not yet available: `{path.name}`")
+        return
+
+    st.image(str(path), caption=caption, use_container_width=True)
 
 
 def _show_text_or_missing(path: Path) -> None:
@@ -177,6 +179,12 @@ with gem_tab:
     st.caption(
         "Pipeline order: draft model build, theoretical upper bound, preset condition benchmark, "
         "optional custom condition, and validation."
+    )
+    st.subheader("Pipeline overview")
+    st.caption("Current MVP workflow shown as the official draft build and analysis path.")
+    _show_image_or_missing(
+        PIPELINE_MAP_PATH,
+        caption="Fungal GEM MVP pipeline",
     )
 
     # ── Upload & Run section ────────────────────────

@@ -3,68 +3,78 @@ graph LR
 %%metro title: Fungal GEM MVP Pipeline
 %%metro legend: bottom
 %%metro style: light
-%%metro line: core | Core Build | #2c9f73
+%%metro line: build | Draft Build | #2c9f73
 %%metro line: theo | Theoretical Upper Bound | #3b82f6
 %%metro line: preset | Preset Conditions | #f59e0b
 %%metro line: custom | Custom Condition | #e15759
+%%metro line: validate | Validation | #6b7280
 
 %%metro grid: input | 0,1
 %%metro grid: modelseed | 1,1
-%%metro grid: draft | 2,1
-%%metro grid: export | 3,1
-%%metro grid: hub | 4,1
-%%metro grid: theoretical | 6,0
-%%metro grid: presetlib | 6,1
-%%metro grid: custommode | 6,2
-%%metro grid: summary | 7,1
+%%metro grid: template | 2,1
+%%metro grid: draft | 3,1
+%%metro grid: export | 4,1
+%%metro grid: hub | 5,1
+%%metro grid: theoretical | 7,0
+%%metro grid: presetlib | 7,1
+%%metro grid: custommode | 7,2
+%%metro grid: validation | 7,3
+%%metro grid: summary | 8,1
 
 subgraph input [Input]
   %%metro direction: LR
   upload[Protein FASTA]
   prepare[Check input]
-  upload -->|core| prepare
+  upload -->|build| prepare
 end
 
 subgraph modelseed [ModelSEED]
   %%metro direction: LR
   genome[Load MSGenome]
   rast[Optional RAST]
-  genome -->|core| rast
+  genome -->|build| rast
+end
+
+subgraph template [Template]
+  %%metro direction: LR
+  choose[Select template]
+  scaffold[Core or fungal scaffold]
+  choose -->|build| scaffold
 end
 
 subgraph draft [Draft GEM]
   %%metro direction: LR
   reconstruct[Reconstruct model]
   draftgem[Draft GEM]
-  reconstruct -->|core| draftgem
+  reconstruct -->|build| draftgem
 end
 
 subgraph export [Export + COBRA]
   %%metro direction: LR
   gapfill[Gapfill]
   exportmodel[Export]
-  inspect[COBRA]
-  gapfill -->|core| exportmodel
-  exportmodel -->|core| inspect
+  inspect[COBRA inspection]
+  gapfill -->|build| exportmodel
+  exportmodel -->|build| inspect
 end
 
 subgraph hub [Analysis Hub]
   %%metro direction: LR
-  %%metro entry: left | core
-  %%metro exit: right | theo,preset,custom
+  %%metro entry: left | build
+  %%metro exit: right | theo,preset,custom,validate
   analysis[Pick analysis mode]
 end
 
-subgraph theoretical [Mode 1]
+subgraph theoretical [Theoretical Upper Bound]
   %%metro direction: LR
   %%metro entry: left | theo
   %%metro exit: right | theo
-  upper[Theoretical bound]
-  tplot[Bound plot]
+  upper[Theoretical Upper Bound]
+  tplot[Theoretical plot]
   upper -->|theo| tplot
 end
 
-subgraph presetlib [Mode 2]
+subgraph presetlib [Preset Conditions]
   %%metro direction: LR
   %%metro entry: left | preset
   %%metro exit: right | preset
@@ -73,7 +83,7 @@ subgraph presetlib [Mode 2]
   presets -->|preset| pranked
 end
 
-subgraph custommode [Mode 3]
+subgraph custommode [Custom Condition]
   %%metro direction: LR
   %%metro entry: left | custom
   %%metro exit: right | custom
@@ -82,20 +92,30 @@ subgraph custommode [Mode 3]
   customseed -->|custom| cplot
 end
 
+subgraph validation [Validation]
+  %%metro direction: LR
+  %%metro entry: left | validate
+  vcheck[Validation mode]
+  vdash[Validation dashboard]
+  vcheck -->|validate| vdash
+end
+
 subgraph summary [Comparison]
   %%metro direction: LR
   %%metro entry: left | theo,preset,custom
   compare[Comparison plot]
 end
 
-prepare -->|core| genome
-rast -->|core| reconstruct
-draftgem -->|core| gapfill
-inspect -->|core| analysis
+prepare -->|build| genome
+rast -->|build| choose
+scaffold -->|build| reconstruct
+draftgem -->|build| gapfill
+inspect -->|build| analysis
 
 analysis -->|theo| upper
 analysis -->|preset| presets
 analysis -->|custom| customseed
+analysis -->|validate| vcheck
 
 tplot -->|theo| compare
 pranked -->|preset| compare
