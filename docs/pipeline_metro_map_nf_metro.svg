@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-     width="2600" height="980" viewBox="0 0 2600 980">
+     width="2050" height="850" viewBox="0 0 2050 850">
 <defs>
 </defs>
 <style>@media (prefers-color-scheme: dark) {
@@ -157,5 +157,5 @@
 <text x="78.0" y="651.0" font-size="16.0" fill="#333333" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" dy="0.3em">Custom Condition</text>
 <path d="M42.0,675.0 L66.0,675.0" stroke="#6b7280" stroke-width="4.0" stroke-linecap="round" />
 <text x="78.0" y="675.0" font-size="16.0" fill="#333333" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" dy="0.3em">Validation</text>
-<text x="2570.0" y="972.0" font-size="8" fill="rgba(150, 150, 150, 0.6)" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="end">created with nf-metro v0.6.1</text>
+<text x="2020.0" y="842.0" font-size="8" fill="rgba(150, 150, 150, 0.6)" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="end">created with nf-metro v0.6.1</text>
 </svg>
