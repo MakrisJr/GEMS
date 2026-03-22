@@ -152,3 +152,64 @@ def get_training_metadata() -> dict:
         return None
     with open(meta_path) as f:
         return json.load(f)
+
+
+def _extract_feature_importance(model) -> Tuple[Optional[np.ndarray], Optional[str]]:
+    """Return model-native feature importance values and a short type label."""
+    if hasattr(model, "feature_importances_"):
+        values = np.asarray(model.feature_importances_, dtype=float).ravel()
+        return values, "feature_importance"
+
+    if hasattr(model, "coef_"):
+        values = np.asarray(model.coef_, dtype=float).ravel()
+        return values, "coefficient"
+
+    return None, None
+
+
+def get_latest_feature_importances() -> Dict[str, Any]:
+    """
+    Return feature-importance data for the latest trained models.
+
+    Output shape:
+      {
+        target_name: {
+          "model_type": str,
+          "importance_type": str,
+          "features": [{"feature": str, "importance": float}, ...]
+        },
+        ...
+      }
+    """
+    metadata = get_training_metadata()
+    if metadata is None:
+        return {}
+
+    models, _ = load_latest_models()
+    feature_names = list(ALL_FEATURES)
+    feature_payload = {}
+
+    for target in ALL_TARGETS:
+        model_info = models.get(target, {})
+        model = model_info.get("model")
+        if model is None:
+            continue
+
+        values, importance_type = _extract_feature_importance(model)
+        if values is None:
+            continue
+
+        n_features = min(len(feature_names), len(values))
+        rows = [
+            {"feature": feature_names[idx], "importance": float(values[idx])}
+            for idx in range(n_features)
+        ]
+        rows.sort(key=lambda row: abs(row["importance"]), reverse=True)
+
+        feature_payload[target] = {
+            "model_type": metadata["targets"].get(target, {}).get("best_model_type", "unknown"),
+            "importance_type": importance_type,
+            "features": rows,
+        }
+
+    return feature_payload

@@ -27,7 +27,7 @@ try:
         ALL_TARGETS,
     )
     from backend.data_loader import load_combined, get_dataset_stats
-    from backend.model_trainer import train_all, get_training_metadata
+    from backend.model_trainer import train_all, get_training_metadata, get_latest_feature_importances
     from backend.recommender import recommend
     from backend.lab_exporter import recommendations_to_excel
     from backend.data_ingestion import ingest_results
@@ -46,6 +46,9 @@ except Exception as exc:
 
     def get_training_metadata():
         return None
+
+    def get_latest_feature_importances():
+        return {}
 
     def get_current_round():
         return 0
@@ -88,6 +91,13 @@ CUSTOM_PRESET_OPTIONS = {
     "lower_tca_rescue": "Lower TCA Rescue / Recycling Core Support",
     "upper_sugar_only": "Upper Sugar Only / Reactants Only",
     "energy_redox_only": "Energy Redox Only",
+}
+
+TARGET_LABELS = {
+    TARGET_GROWTH: "Growth rate",
+    TARGET_BIOMASS: "Biomass",
+    TARGET_BYPRODUCTS: "Byproducts",
+    TARGET_SCORE: "Overall score",
 }
 
 # ── Session state init ──────────────────────────
@@ -776,6 +786,53 @@ Features include nutrient composition, environmental parameters, and strain meta
                 )
                 fig.update_layout(yaxis_range=[0, 1], height=350, margin=dict(t=40, b=10))
                 st.plotly_chart(fig, use_container_width=True)
+
+                feature_importances = get_latest_feature_importances()
+                if feature_importances:
+                    st.subheader("Feature Importance")
+                    st.caption(
+                        "Model-derived feature importance for the best saved model for each target. "
+                        "For tree-based models, values reflect split-based importance rather than linear coefficients."
+                    )
+
+                    importance_tabs = st.tabs(
+                        [TARGET_LABELS.get(target, target) for target in ALL_TARGETS if target in feature_importances]
+                    )
+
+                    for tab, target in zip(
+                        importance_tabs,
+                        [target for target in ALL_TARGETS if target in feature_importances],
+                    ):
+                        with tab:
+                            info = feature_importances[target]
+                            imp_df = pd.DataFrame(info["features"])
+                            plot_df = imp_df.sort_values("importance", ascending=True)
+                            fig_imp = px.bar(
+                                plot_df,
+                                x="importance",
+                                y="feature",
+                                orientation="h",
+                                title=(
+                                    f"{TARGET_LABELS.get(target, target)} "
+                                    f"({info['model_type']}, {info['importance_type']})"
+                                ),
+                                labels={"importance": "Importance", "feature": "Feature"},
+                                color="importance",
+                                color_continuous_scale="Blues",
+                            )
+                            fig_imp.update_layout(
+                                height=520,
+                                margin=dict(t=50, b=10),
+                                coloraxis_showscale=False,
+                            )
+                            st.plotly_chart(fig_imp, use_container_width=True)
+                            st.dataframe(
+                                imp_df.rename(
+                                    columns={"feature": "Feature", "importance": "Importance"}
+                                ),
+                                use_container_width=True,
+                                hide_index=True,
+                            )
             else:
                 st.info("No model has been trained yet. Select `Train model` to begin.")
 
